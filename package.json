@@ -1,0 +1,14 @@
+{
+  "name": "malus-domestica-digital-twin",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "苹果树模块化 3D 交互式数字孪生 · 园艺参赛作品",
+  "scripts": {
+    "start": "node server.mjs",
+    "check": "node --check server.mjs && node --check src/main.js"
+  },
+  "dependencies": {
+    "three": "0.187.0"
+  }
+}

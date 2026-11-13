@@ -1,0 +1,10 @@
+# 本地运行依赖（Three.js 已 vendored 到 vendor/，无需上传）
+node_modules/
+
+# WorkBuddy 项目内部数据
+.workbuddy/
+
+# 系统 / 日志
+*.log
+.DS_Store
+Thumbs.db

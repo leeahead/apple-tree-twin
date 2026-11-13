@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>MALUS DOMESTICA · 苹果树数字孪生 | 园艺数字标本</title>
+<meta name="description" content="基于 WebGL / Three.js 的模块化苹果树数字孪生系统，涵盖根系、树干、分枝、叶片、芽、花与果实的交互式植物学可视化。" />
+<link rel="icon" href="data:," />
+<link rel="stylesheet" href="./styles.css" />
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three/three.module.js",
+    "three/addons/": "./vendor/three/addons/",
+    "three/": "./vendor/three/"
+  }
+}
+</script>
+</head>
+<body>
+
+<div id="app">
+  <canvas id="stage" aria-label="苹果树三维数字孪生视口"></canvas>
+  <div id="vignette" aria-hidden="true"></div>
+  <div id="grain" aria-hidden="true"></div>
+
+  <!-- ============ 加载屏 ============ -->
+  <div id="loader">
+    <div class="loader-inner">
+      <div class="loader-mark">
+        <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+          <circle cx="32" cy="32" r="29" stroke="currentColor" stroke-width="1" opacity=".35"/>
+          <circle cx="32" cy="32" r="22" stroke="currentColor" stroke-width=".6" opacity=".2"/>
+          <path d="M32 53V25M32 33c-7 0-12-5-13-12 7 0 12 4 13 12Zm0-5c7 0 12-5 13-12-7 0-12 4-13 12Z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          <path d="M32 25c-4-3-5-8-3-12 4 2 6 6 3 12Z" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="loader-title">MALUS DOMESTICA</div>
+      <div class="loader-sub">苹果树 · 模块化数字孪生标本</div>
+      <div class="loader-bar"><span id="loader-progress"></span></div>
+      <div class="loader-log" id="loader-log">正在初始化渲染管线…</div>
+      <div class="loader-meta">WEBGL 2 / PBR / PROCEDURAL TEXTURE / RAYCASTING</div>
+    </div>
+  </div>
+
+  <!-- ============ 顶栏 ============ -->
+  <header id="topbar" class="chrome">
+    <div class="brand">
+      <div class="brand-seal">
+        <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <circle cx="20" cy="20" r="18.5" stroke="currentColor" stroke-width=".8" opacity=".6"/>
+          <path d="M20 33V15M20 22c-5 0-8.5-3.5-9-9 5 0 8.5 3 9 9Zm0-3.5c5 0 8.5-3.5 9-9-5 0-8.5 3-9 9Z" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>MALUS <em>domestica</em></h1>
+        <p>苹果树数字孪生 · 交互式植物学标本 <span class="brand-ver">v1.0 / 园艺参赛作品</span></p>
+      </div>
+    </div>
+
+    <div class="toolbar" id="toolbar">
+      <div class="tool-group" role="group" aria-label="投影模式">
+        <button class="tool active" id="btn-persp" title="透视投影缩放" data-tip="透视投影：滚轮改变相机距离">
+          <svg viewBox="0 0 20 20" fill="none"><path d="M3 4h14l-2 12H5L3 4Z" stroke="currentColor" stroke-width="1.2"/><path d="M7 4v12M13 4v12" stroke="currentColor" stroke-width=".8" opacity=".6"/></svg><span>透视</span>
+        </button>
+        <button class="tool" id="btn-ortho" title="正交投影缩放" data-tip="正交投影：滚轮改变视口比例，适合形态测量">
+          <svg viewBox="0 0 20 20" fill="none"><rect x="3" y="5" width="14" height="10" stroke="currentColor" stroke-width="1.2"/><path d="M7 5v10M13 5v10" stroke="currentColor" stroke-width=".8" opacity=".6"/></svg><span>正交</span>
+        </button>
+      </div>
+
+      <div class="tool-sep"></div>
+
+      <div class="tool-group">
+        <button class="tool icon-only" id="btn-dof" title="景深" data-tip="电影级景深：聚焦时背景虚化">
+          <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="6.5" stroke="currentColor" stroke-width="1.2"/><circle cx="10" cy="10" r="2.5" fill="currentColor"/><circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width=".6" opacity=".45" stroke-dasharray="2 3"/></svg>
+        </button>
+        <button class="tool icon-only active" id="btn-bloom" title="辉光" data-tip="柔和辉光：模拟逆光叶缘透射">
+          <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" fill="currentColor"/><path d="M10 1v3M10 16v3M1 10h3M16 10h3M3.6 3.6l2.1 2.1M14.3 14.3l2.1 2.1M16.4 3.6l-2.1 2.1M5.7 14.3l-2.1 2.1" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+        </button>
+        <button class="tool icon-only" id="btn-explode" title="解剖剖面" data-tip="解剖剖面：主干 / 根 / 叶的代表性横切面与分层爆炸图">
+          <svg viewBox="0 0 20 20" fill="none"><circle cx="9" cy="10" r="6.4" stroke="currentColor" stroke-width="1.15"/><circle cx="9" cy="10" r="4.1" stroke="currentColor" stroke-width=".8" opacity=".7"/><circle cx="9" cy="10" r="1.7" fill="currentColor"/><path d="M9 3.6V1M15.4 10H19" stroke="currentColor" stroke-width="1" stroke-dasharray="2 2" stroke-linecap="round"/></svg>
+        </button>
+        <button class="tool icon-only" id="btn-soil" title="土壤剖面" data-tip="切换土壤剖面显隐，观察地下根系">
+          <svg viewBox="0 0 20 20" fill="none"><path d="M2 7h16M2 12h16M5 7V4M11 7V4M8 12v-5M15 12V7" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><path d="M2 17h16" stroke="currentColor" stroke-width="1.1"/></svg>
+        </button>
+        <button class="tool icon-only" id="btn-reset" title="重置视角" data-tip="返回全景视角">
+          <svg viewBox="0 0 20 20" fill="none"><path d="M16.5 8A6.5 6.5 0 1 0 17 11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M16.5 3.5V8H12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+
+      <div class="tool-sep"></div>
+
+      <div class="tool-group">
+        <button class="tool icon-only" id="btn-ai-settings" title="AI 接口设置" data-tip="配置 AI 大模型接口，获取实时专家解读">
+          <svg viewBox="0 0 20 20" fill="none"><path d="M10 2.5 11.9 8 17.5 10l-5.6 2L10 17.5 8.1 12 2.5 10l5.6-2L10 2.5Z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/><circle cx="10" cy="10" r="1.6" fill="currentColor"/></svg>
+        </button>
+        <button class="tool icon-only" id="btn-help" title="操作说明" data-tip="操作说明">
+          <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.2"/><path d="M8 7.8a2.1 2.1 0 1 1 3.1 1.9c-.7.4-1.1.9-1.1 1.8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="10" cy="14.3" r=".8" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ 左侧器官导航 ============ -->
+  <aside id="navigator" class="chrome glass">
+    <div class="nav-head">
+      <div class="nav-eyebrow">ORGAN INDEX / 器官索引</div>
+      <div class="nav-title">模块化结构树</div>
+      <div class="nav-count"><span id="nav-count">—</span> 个可交互单元</div>
+    </div>
+    <div class="nav-scroll" id="nav-scroll"></div>
+    <div class="nav-foot">
+      <button class="nav-anatomy" id="btn-anatomy-entry" title="打开解剖剖面视图">
+        <span class="na-ico">
+          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="9" cy="10" r="6.2" stroke="currentColor" stroke-width="1.1"/><circle cx="9" cy="10" r="3.4" stroke="currentColor" stroke-width=".9"/><circle cx="9" cy="10" r="1.2" fill="currentColor"/><path d="M15.2 10H19" stroke="currentColor" stroke-width="1" stroke-dasharray="2 2"/></svg>
+        </span>
+        <span class="na-text"><b>解剖剖面</b><small>3 个代表性横切面 · 分层爆炸图</small></span>
+        <span class="na-arrow">↗</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ============ 环境控制（左下） ============ -->
+  <aside id="environment" class="chrome glass">
+    <div class="env-head">
+      <span class="env-eyebrow">ENVIRONMENT</span>
+      <span class="env-title">生境与物候</span>
+    </div>
+    <div class="env-body">
+      <div class="slider-row">
+        <label for="slider-time">昼夜时刻</label>
+        <output id="out-time">09:00 · 晨光</output>
+      </div>
+      <input type="range" id="slider-time" min="0" max="24" step="0.1" value="9" />
+      <div class="time-scale"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>
+
+      <div class="env-divider"></div>
+
+      <div class="slider-row"><label>物候阶段</label></div>
+      <div class="pheno-tabs" id="pheno-tabs">
+        <button data-pheno="bloom">盛花期</button>
+        <button data-pheno="young" class="active">幼果期</button>
+        <button data-pheno="mature">成熟期</button>
+      </div>
+      <p class="env-note" id="pheno-note">落花后 20–40 天，幼果细胞分裂与膨大，果面密被绒毛。</p>
+
+      <div class="env-divider"></div>
+
+      <div class="slider-row"><label>果实发育度</label><output id="out-fruit">35%</output></div>
+      <input type="range" id="slider-fruit" min="0" max="100" value="35" />
+    </div>
+  </aside>
+
+  <!-- ============ 右侧知识面板 ============ -->
+  <aside id="knowledge" class="chrome glass" aria-live="polite">
+    <div class="kn-empty" id="kn-empty">
+      <div class="kn-empty-mark">
+        <svg viewBox="0 0 72 72" fill="none" aria-hidden="true">
+          <circle cx="36" cy="36" r="33" stroke="currentColor" stroke-width=".7" opacity=".4"/>
+          <circle cx="36" cy="36" r="26" stroke="currentColor" stroke-width=".5" opacity=".25" stroke-dasharray="2 4"/>
+          <path d="M36 58V29M36 40c-9 0-15-6-16-15 9 0 15 5 16 15Zm0-6c9 0 15-6 16-15-9 0-15 5-16 15Z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          <circle cx="36" cy="23" r="3.2" stroke="currentColor" stroke-width="1"/>
+        </svg>
+      </div>
+      <h2>点击任意器官</h2>
+      <p>摄像机将以贝塞尔弧线推进至最佳观赏视角，<br/>并展开该部位的植物学知识框架。</p>
+      <div class="kn-empty-tips">
+        <span>左键拖拽 · 旋转</span><span>滚轮 · 缩放</span><span>右键拖拽 · 平移</span>
+      </div>
+    </div>
+
+    <div class="kn-content hidden" id="kn-content">
+      <div class="kn-topbar">
+        <span class="kn-crumb" id="kn-crumb">—</span>
+        <button class="kn-close" id="kn-close" title="关闭面板">
+          <svg viewBox="0 0 16 16" fill="none"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="kn-hero">
+        <div class="kn-index" id="kn-index">01</div>
+        <div class="kn-hero-text">
+          <h2 id="kn-title">—</h2>
+          <div class="kn-latin" id="kn-latin">—</div>
+        </div>
+      </div>
+      <div class="kn-tags" id="kn-tags"></div>
+      <p class="kn-summary" id="kn-summary"></p>
+      <div class="kn-metrics" id="kn-metrics"></div>
+
+      <nav class="kn-tabs" id="kn-tabs">
+        <button class="active" data-tab="botany">形态解剖</button>
+        <button data-tab="physiology">生理功能</button>
+        <button data-tab="horticulture">园艺要点</button>
+        <button data-tab="ai">AI 解读</button>
+      </nav>
+      <div class="kn-panels" id="kn-panels"></div>
+      <div class="kn-foot">
+        <span id="kn-uuid">UUID —</span>
+        <button id="kn-recam" title="重新运镜">重新运镜 ↗</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ 底部状态栏 ============ -->
+  <footer id="statusbar" class="chrome">
+    <div class="st-left">
+      <span class="st-live"><i></i> LIVE</span>
+      <span class="st-sep"></span>
+      <span>选中 <b id="st-part">—</b></span>
+      <span class="st-sep"></span>
+      <span>投影 <b id="st-proj">PERSPECTIVE</b></span>
+      <span class="st-sep"></span>
+      <span>光照 <b id="st-light">DAYLIGHT</b></span>
+    </div>
+    <div class="st-right">
+      <span>部件 <b id="st-objects">0</b></span>
+      <span class="st-sep"></span>
+      <span>三角面 <b id="st-tris">0</b></span>
+      <span class="st-sep"></span>
+      <span><b id="st-fps">60</b> FPS</span>
+    </div>
+  </footer>
+
+  <div id="hint" class="chrome hidden">点击器官开始探索 · 按 <kbd>Esc</kbd> 返回全景</div>
+  <div id="tooltip" class="hidden"></div>
+
+  <!-- ============ 解剖剖面视图（独立标本台，不改动三维树） ============ -->
+  <div id="anatomy" class="hidden" aria-label="解剖剖面视图">
+    <header class="ana-header">
+      <div class="ana-head-brand">
+        <div class="ana-head-mark">
+          <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+            <circle cx="20" cy="20" r="16.5" stroke="currentColor" stroke-width="1" opacity=".75"/>
+            <circle cx="20" cy="20" r="11.4" stroke="currentColor" stroke-width=".8" opacity=".6"/>
+            <circle cx="20" cy="20" r="6.2" stroke="currentColor" stroke-width=".8" opacity=".5"/>
+            <circle cx="20" cy="20" r="2" fill="currentColor"/>
+            <path d="M20 3.5V0M36.5 20H40" stroke="currentColor" stroke-width="1" stroke-dasharray="2 2"/>
+          </svg>
+        </div>
+        <div>
+          <div class="ana-eyebrow">ANATOMY / SECTION VIEW</div>
+          <h2>解剖剖面 · 代表性横切面</h2>
+        </div>
+      </div>
+      <nav class="ana-spec-tabs" id="ana-spec-tabs" aria-label="选择标本"></nav>
+      <button class="ana-close" id="ana-close" title="返回三维标本">
+        <span>返回三维标本</span>
+        <svg viewBox="0 0 16 16" fill="none"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </button>
+    </header>
+
+    <div class="ana-main">
+      <aside class="ana-left">
+        <div id="ana-left-body"></div>
+      </aside>
+
+      <section class="ana-stage">
+        <div class="ana-stage-head">
+          <span id="ana-stage-caption">—</span>
+          <span class="ana-stage-tag">横切面 / T.S.</span>
+        </div>
+        <div class="ana-canvas-wrap">
+          <svg id="ana-svg" viewBox="0 0 900 640" preserveAspectRatio="xMidYMid meet" role="img" aria-label="植物器官横断面分层标注图"></svg>
+        </div>
+        <div class="ana-stage-foot">
+          <span><i class="ana-key-dot"></i> 图中编号与右侧结构标注一一对应 · 引线指向所属组织层</span>
+          <span>切片方向：由外向内 / 由上表皮向下表皮</span>
+        </div>
+      </section>
+
+      <aside class="ana-right">
+        <div id="ana-legend"></div>
+        <div class="ana-detail" id="ana-detail"></div>
+        <div class="ana-extra" id="ana-extra"></div>
+      </aside>
+    </div>
+
+    <footer class="ana-footer">
+      <div class="ana-footer-note">仅展示 3 个代表性切面，不逐叶逐根展开 · 所有标注固定排布，分层展开时不会错位</div>
+      <div class="ana-mode" id="ana-mode" role="group" aria-label="视图模式">
+        <button data-mode="section" class="active">
+          <svg viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="6.4" stroke="currentColor" stroke-width="1.1"/><circle cx="9" cy="9" r="3.2" stroke="currentColor" stroke-width=".9"/><circle cx="9" cy="9" r="1" fill="currentColor"/></svg>
+          剖面视图
+        </button>
+        <button data-mode="exploded">
+          <svg viewBox="0 0 18 18" fill="none"><path d="M9 1.5l5.5 2.6L9 6.7 3.5 4.1 9 1.5Z" stroke="currentColor" stroke-width="1"/><path d="M3.5 9l5.5 2.6 5.5-2.6M3.5 13.4L9 16l5.5-2.6" stroke="currentColor" stroke-width="1"/></svg>
+          分层爆炸
+        </button>
+      </div>
+      <div class="ana-footer-scale">教学放大 · 结构非等比 · <kbd>Esc</kbd> 返回</div>
+    </footer>
+  </div>
+
+  <!-- ============ AI 设置弹窗 ============ -->
+  <div id="modal-ai" class="modal hidden">
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-card glass">
+      <div class="modal-head">
+        <div><div class="modal-eyebrow">LLM INTEGRATION</div><h2>AI 大模型实时解读</h2></div>
+        <button class="modal-x" data-close aria-label="关闭">✕</button>
+      </div>
+      <p class="modal-lead">连接任意 OpenAI 兼容的 Chat Completions 接口。系统会连同该器官的植物学上下文一并发送，由大模型生成更深入、可更新的园艺学解读。</p>
+
+      <div class="form-row">
+        <label for="ai-provider">服务预设</label>
+        <select id="ai-provider">
+          <option value="custom">自定义 / OpenAI 兼容</option>
+          <option value="deepseek">DeepSeek</option>
+          <option value="moonshot">Moonshot Kimi</option>
+          <option value="dashscope">阿里通义千问</option>
+          <option value="openai">OpenAI</option>
+          <option value="ollama">本地 Ollama</option>
+          <option value="proxy">本地服务端代理（推荐）</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="ai-endpoint">接口地址 <small>Base URL</small></label>
+        <input id="ai-endpoint" type="text" placeholder="https://api.deepseek.com/v1" autocomplete="off" />
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <label for="ai-model">模型</label>
+          <input id="ai-model" type="text" placeholder="deepseek-chat" autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <label for="ai-key">API Key <small>仅存本机</small></label>
+          <input id="ai-key" type="password" placeholder="sk-…" autocomplete="off" />
+        </div>
+      </div>
+      <label class="check-row"><input type="checkbox" id="ai-stream" checked /><span>启用流式输出（SSE）</span></label>
+      <div class="modal-note">
+        <b>安全说明：</b>浏览器直连第三方服务会在本机保存密钥，仅适用于参赛演示。生产环境请勾选「本地服务端代理」，在 <code>server.mjs</code> 所在进程用环境变量 <code>AI_API_KEY</code> 配置，密钥不会下发到前端。
+      </div>
+      <div class="modal-actions">
+        <button class="btn ghost" id="ai-test">测试连接</button>
+        <button class="btn primary" id="ai-save">保存配置</button>
+      </div>
+      <div class="modal-status" id="ai-status"></div>
+    </div>
+  </div>
+
+  <!-- ============ 帮助弹窗 ============ -->
+  <div id="modal-help" class="modal hidden">
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-card glass">
+      <div class="modal-head">
+        <div><div class="modal-eyebrow">USER GUIDE</div><h2>操作与科学说明</h2></div>
+        <button class="modal-x" data-close aria-label="关闭">✕</button>
+      </div>
+      <div class="help-grid">
+        <div><h3>视口操作</h3><ul>
+          <li>左键拖拽 — 无死角轨道旋转（阻尼惯性）</li>
+          <li>滚轮 — 透视模式改变距离 / 正交模式改变视口比例</li>
+          <li>右键拖拽 — 平移视口</li>
+          <li>点击器官 — 弧线运镜 + 景深聚焦 + 知识框架</li>
+          <li>解剖剖面按钮 — 主干 / 根 / 叶代表性横切面，可切换分层爆炸图</li>
+          <li>双击空白 / Esc — 返回全景；解剖视图内按 Esc 返回三维标本</li>
+        </ul></div>
+        <div><h3>建模口径</h3><ul>
+          <li>物种：栽培苹果 <i>Malus domestica</i> Borkh.，蔷薇科苹果属</li>
+          <li>分枝采用黄金角 137.5° 叶序 + 斐波那契级数递推节间，属参数化形态发生近似；真实分枝由顶端优势与激素调控，并非严格数学定律</li>
+          <li>贴图为程序化生成的高分辨率 PBR 贴图集（漫反射 / 法线 / 粗糙度 / 位移），不依赖外部素材</li>
+          <li>微观结构（气孔、绒毛、蜡质）为教学放大表达，非等比尺度</li>
+          <li>解剖剖面为模式化教学切面：仅取主干、吸收根、叶片各一处代表性横断面，标注周皮 / 韧皮部 / 形成层 / 木质部 / 髓、凯氏带 / 中柱鞘、栅栏与海绵组织等，层厚按教学需要放大</li>
+          <li>知识库内容依据果树栽培学通用结论整理，具体农事参数需按品种、砧木与当地气候校正</li>
+        </ul></div>
+        <div><h3>模块层级</h3><ul>
+          <li>地下：主根 / 输导根 / 生长根 / 吸收根 / 根颈</li>
+          <li>轴体：树干（树皮、形成层、年轮截面）</li>
+          <li>冠层：中心领导干 / 一级主枝 / 二级侧枝 / 结果枝组 / 副梢</li>
+          <li>叶器：叶片（叶肉、叶脉、气孔）/ 叶柄</li>
+          <li>繁殖：叶芽 / 花芽 / 芽鳞 / 花瓣 / 雄蕊群 / 雌蕊 / 萼片</li>
+          <li>果实：果体 / 果柄 / 梗洼 / 萼洼 / 表皮蜡质 / 果心种子</li>
+        </ul></div>
+        <div><h3>AI 接口</h3><ul>
+          <li>兼容 OpenAI <code>/chat/completions</code> 协议，支持流式 SSE</li>
+          <li>内置服务端代理 <code>/api/ai</code>，可用环境变量配置上游</li>
+          <li>未配置或网络不可用时自动降级至内置离线知识库，并在界面明确标注来源</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
