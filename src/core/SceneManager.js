@@ -520,6 +520,22 @@ export class SceneManager {
     if (this.controls) this.controls.enabled = on;
   }
 
+  /**
+   * 紧凑模式下抽屉展开时，把取景中心水平让出 shift 像素。
+   * 正值 = 画面内容左移（给右侧抽屉让位），负值 = 右移（给左侧抽屉让位）。
+   * 使用 Three.js 官方 view offset：投影矩阵变化会同步反映到 Raycaster，
+   * 因此拾取坐标与画面始终一致，无需改动任何拾取逻辑。
+   */
+  setViewportShift(shift = 0) {
+    this._viewShift = shift;
+    const w = Math.max(1, window.innerWidth), h = Math.max(1, window.innerHeight);
+    const dx = Math.round(shift);
+    for (const cam of [this.persp, this.ortho]) {
+      if (Math.abs(dx) < 1) cam.clearViewOffset();
+      else cam.setViewOffset(w, h, dx, 0, w, h);
+    }
+  }
+
   resize() {
     const w = Math.max(1, window.innerWidth), h = Math.max(1, window.innerHeight);
     const aspect = w / h;
@@ -535,6 +551,8 @@ export class SceneManager {
       this.composer.setSize(w, h);
       this.bloomPass.setSize(w, h);
     }
+    // 视口变化后重新套用紧凑模式的让位（setViewOffset 依赖 fullWidth/fullHeight）
+    if (Math.abs(this._viewShift || 0) >= 1) this.setViewportShift(this._viewShift);
   }
 
   render(dt) {

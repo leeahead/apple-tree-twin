@@ -583,3 +583,331 @@ input[type=range]::-moz-range-thumb {
   .ana-footer-scale { display: none; }
   .ana-mode button { padding: 6px 11px; }
 }
+
+/* ============================================================
+   COMPACT MODE · 手机横屏 / 低高度视口
+   由 CompactLayout.js 依据 matchMedia 给 <body> 加 .compact
+   原则：三维画布始终全屏；两侧知识区退化为「边缘把手 + 按需抽屉」，
+        抽屉内再分层；同一时刻最多展开一个抽屉，保证 3D 操作面积。
+   ============================================================ */
+.compact-only,
+.tip-touch, .hint-touch, .kn-empty-touch { display: none; }
+
+body.compact {
+  --chrome-top: 46px;
+  --chrome-bottom: 22px;
+  --rail-w: 38px;
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --left-edge: calc(var(--safe-l) + var(--rail-w) + 10px);
+  --right-edge: calc(var(--safe-r) + var(--rail-w) + 10px);
+  --drawer-left-w: min(42vw, 292px);
+  --drawer-right-w: min(48vw, 356px);
+}
+body.compact .tip-mouse, body.compact .hint-desktop, body.compact .kn-empty-mouse { display: none; }
+body.compact .tip-touch { display: inline; }
+body.compact .hint-touch { display: inline; }
+body.compact .kn-empty-touch { display: block; }
+
+/* ---------- 顶栏 / 状态栏压缩 ---------- */
+body.compact #topbar {
+  height: var(--chrome-top); gap: 8px;
+  padding-left: calc(12px + var(--safe-l));
+  padding-right: calc(10px + var(--safe-r));
+}
+body.compact .brand { gap: 8px; }
+body.compact .brand-seal { width: 28px; height: 28px; }
+body.compact .brand-text h1 { font-size: 13px; letter-spacing: .08em; }
+body.compact .toolbar { gap: 4px; flex: 1; justify-content: flex-end; overflow-x: auto; scrollbar-width: none; }
+body.compact .toolbar::-webkit-scrollbar { display: none; }
+body.compact .tool-group { gap: 1px; padding: 2px; border-radius: 9px; }
+body.compact .tool { width: 30px; height: 30px; padding: 0; justify-content: center; }
+body.compact .tool svg { width: 15px; height: 15px; }
+body.compact .tool-sep { display: none; }
+body.compact #statusbar {
+  height: var(--chrome-bottom); font-size: 8.5px;
+  padding-left: calc(10px + var(--safe-l)); padding-right: calc(10px + var(--safe-r));
+}
+body.compact .st-left, body.compact .st-right { gap: 7px; }
+body.compact #hint {
+  bottom: 28px; max-width: min(52vw, 420px); text-align: center;
+  padding: 5px 12px; font-size: 9.5px; line-height: 1.5;
+  transition: left .3s ease, max-width .3s ease;
+}
+/* 抽屉展开时提示条跟着 3D 可见区中心走，避免被遮住 */
+body.compact[data-drawer="left"] #hint { left: 70%; max-width: 36vw; }
+body.compact[data-drawer="right"] #hint { left: 27%; max-width: 36vw; }
+body.compact .loader-inner { width: min(360px, 70vw); }
+body.compact .loader-mark { width: 42px; height: 42px; margin-bottom: 12px; }
+body.compact .loader-title { font-size: 19px; }
+body.compact .loader-sub { font-size: 10px; margin-top: 5px; }
+body.compact .loader-bar { margin: 16px 0 8px; }
+body.compact .loader-meta { margin-top: 16px; font-size: 8px; }
+
+/* ---------- 边缘把手 ---------- */
+body.compact .compact-rail {
+  display: flex; position: absolute; top: 50%; transform: translateY(-50%);
+  flex-direction: column; gap: 6px; z-index: 24;
+}
+body.compact #compact-rail-left { left: calc(var(--safe-l) + 5px); }
+body.compact #compact-rail-right { right: calc(var(--safe-r) + 5px); }
+body.compact .compact-rail .rail-btn {
+  position: relative; width: var(--rail-w); height: 46px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  border-radius: 10px; font-size: 9px; letter-spacing: .04em; color: var(--muted);
+  background: linear-gradient(155deg, rgba(20, 40, 34, .86), rgba(7, 18, 15, .92));
+  border: 1px solid var(--line-strong);
+  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .34);
+  transition: color .2s, border-color .2s, background .2s, transform .15s;
+}
+body.compact .compact-rail .rail-btn svg { width: 17px; height: 17px; }
+body.compact .compact-rail .rail-btn:active { transform: scale(.93); }
+body.compact[data-drawer="left"][data-left="nav"] #rail-nav,
+body.compact[data-drawer="left"][data-left="env"] #rail-env,
+body.compact[data-drawer="right"] #rail-kn {
+  color: var(--accent); background: linear-gradient(155deg, rgba(64, 48, 24, .92), rgba(24, 20, 12, .94));
+  border-color: rgba(224, 184, 113, .52);
+}
+body.compact .rail-dot {
+  position: absolute; top: 5px; right: 5px; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 8px var(--accent); opacity: 0; transition: opacity .3s;
+}
+body.compact .rail-dot.on { opacity: 1; }
+
+/* ---------- 层叠遮罩（纯视觉，不拦截 3D 手势） ---------- */
+body.compact #compact-scrim {
+  display: block; position: absolute; inset: 0; z-index: 9; pointer-events: none;
+  background: rgba(2, 8, 6, .20); opacity: 0; transition: opacity .3s;
+}
+body.compact[data-drawer="left"] #compact-scrim,
+body.compact[data-drawer="right"] #compact-scrim { opacity: 1; }
+
+/* ---------- 抽屉通用 ---------- */
+body.compact #navigator,
+body.compact #environment,
+body.compact #knowledge {
+  z-index: 22;
+  bottom: calc(var(--chrome-bottom) + 4px);
+  border-radius: 13px;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  transition: transform .34s cubic-bezier(.22, 1, .36, 1), opacity .26s ease,
+              top .28s ease, height .28s ease;
+}
+body.compact #navigator,
+body.compact #environment {
+  top: calc(var(--chrome-top) + 42px);
+  left: var(--left-edge); width: var(--drawer-left-w);
+  transform: translateX(calc(-100% - 64px));
+}
+body.compact #knowledge {
+  top: calc(var(--chrome-top) + 4px);
+  right: var(--right-edge); width: var(--drawer-right-w);
+  transform: translateX(calc(100% + 64px));
+}
+body.compact[data-drawer="left"][data-left="nav"] #navigator,
+body.compact[data-drawer="left"][data-left="env"] #environment,
+body.compact[data-drawer="right"] #knowledge {
+  transform: none; opacity: 1; visibility: visible; pointer-events: auto;
+}
+
+/* ---------- 左抽屉：两层互斥（器官索引 / 生境控制） ---------- */
+body.compact #left-drawer-tabs {
+  display: flex; position: absolute; z-index: 23;
+  top: calc(var(--chrome-top) + 4px); left: var(--left-edge); width: var(--drawer-left-w);
+  height: 34px; padding: 3px; gap: 3px; border-radius: 10px;
+  background: rgba(8, 21, 17, .88); border: 1px solid var(--line);
+  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transform: translateX(calc(-100% - 64px));
+  transition: transform .34s cubic-bezier(.22, 1, .36, 1), opacity .26s;
+}
+body.compact[data-drawer="left"] #left-drawer-tabs {
+  transform: none; opacity: 1; visibility: visible; pointer-events: auto;
+}
+body.compact #left-drawer-tabs button {
+  flex: 1; min-height: 26px; border-radius: 7px; font-size: 10.5px; color: var(--muted);
+  transition: background .2s, color .2s;
+}
+body.compact #left-drawer-tabs button:hover { color: var(--text); }
+body.compact #left-drawer-tabs button.active { color: var(--ink-0); background: var(--accent); font-weight: 600; }
+body.compact #left-drawer-tabs .ld-close {
+  flex: none; width: 30px; font-size: 12px; color: var(--muted); background: rgba(255, 255, 255, .04);
+}
+body.compact #navigator .nav-head { display: none; }
+body.compact #navigator .nav-scroll { padding: 6px 7px 10px; }
+body.compact .nav-group-head { min-height: 40px; padding: 10px; font-size: 10.5px; }
+body.compact .nav-item { min-height: 36px; padding: 8px 9px; }
+body.compact .nav-item .ni-zh { font-size: 11.5px; }
+body.compact .nav-item .ni-la { display: none; }
+body.compact #navigator .nav-foot { padding: 8px; }
+body.compact .nav-anatomy { padding: 7px 9px; }
+body.compact .na-ico { width: 20px; height: 20px; }
+body.compact .na-text small { display: none; }
+body.compact #environment { display: flex; flex-direction: column; overflow-y: auto; padding: 12px 14px; }
+body.compact .env-head { margin-bottom: 9px; }
+body.compact .env-title { font-size: 11.5px; }
+body.compact .env-body { flex: 1; min-height: 0; }
+body.compact .env-divider { margin: 9px 0; }
+body.compact .env-note { font-size: 9px; line-height: 1.55; min-height: 0; margin-top: 6px; }
+body.compact .pheno-tabs button { min-height: 32px; }
+body.compact input[type=range] {
+  height: 22px;
+  background: linear-gradient(90deg, rgba(224, 184, 113, .55), rgba(159, 208, 180, .18)) center / 100% 3px no-repeat;
+}
+body.compact input[type=range]::-webkit-slider-thumb { width: 17px; height: 17px; }
+body.compact input[type=range]::-moz-range-thumb { width: 17px; height: 17px; }
+
+/* ---------- 右抽屉：摘要(peek) / 详情(full) 两档 ---------- */
+body.compact[data-kn="peek"] #knowledge {
+  top: auto; height: min(46vh, 182px); bottom: calc(var(--chrome-bottom) + 4px);
+}
+body.compact[data-kn="full"] #knowledge {
+  top: calc(var(--chrome-top) + 4px); height: auto;
+}
+body.compact #kn-peek-bar {
+  display: flex; position: absolute; left: 0; right: 0; bottom: 0; height: 40px;
+  align-items: center; justify-content: center; gap: 8px; z-index: 2;
+  border-top: 1px solid var(--line); background: rgba(6, 16, 13, .94);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+}
+body.compact[data-drawer="right"][data-has-part="0"] #kn-peek-bar { display: none; }
+body.compact #kn-peek-bar .pk-grip {
+  position: absolute; top: 4px; left: 50%; transform: translateX(-50%);
+  width: 34px; height: 3px; border-radius: 3px; background: var(--line-strong);
+}
+body.compact #kn-peek-bar button {
+  min-height: 30px; padding: 4px 12px; font-size: 10.5px; color: var(--accent);
+  border-radius: 7px; letter-spacing: .02em;
+}
+body.compact #kn-peek-bar button b { margin-left: 5px; font-size: 12px; }
+body.compact #kn-peek-bar button:active { background: var(--accent-soft); }
+body.compact #kn-collapse { display: none; }
+body.compact[data-kn="full"] #kn-expand { display: none; }
+body.compact[data-kn="full"] #kn-collapse { display: inline-flex; align-items: center; }
+
+body.compact .kn-content { padding-bottom: 40px; }
+body.compact .kn-topbar { padding: 6px 12px 2px; }
+body.compact .kn-crumb { font-size: 9px; }
+body.compact .kn-hero { padding: 0 12px; gap: 9px; }
+body.compact .kn-index { font-size: 22px; }
+body.compact .kn-hero h2 { font-size: 16px; }
+body.compact .kn-latin { font-size: 9px; margin-top: 1px; }
+body.compact .kn-tags { padding: 6px 12px 0; gap: 4px; }
+body.compact .kn-tag { font-size: 8.5px; padding: 2px 6px; }
+body.compact .kn-summary { margin: 7px 12px 0; padding: 7px 9px; font-size: 10px; line-height: 1.6; }
+body.compact .kn-metrics { padding: 7px 12px 0; gap: 5px; }
+body.compact .kn-metric { min-width: 74px; padding: 5px 8px; }
+body.compact .kn-metric b { font-size: 13px; }
+body.compact .kn-tabs { margin: 9px 12px 0; }
+body.compact .kn-tabs button { min-height: 34px; font-size: 10px; }
+body.compact .kn-panels { padding: 10px 12px 14px; }
+body.compact .kn-panel h4 { margin: 11px 0 5px; font-size: 11px; }
+body.compact .kn-panel p, body.compact .kn-panel li { font-size: 10.5px; line-height: 1.75; }
+body.compact .kn-foot { padding: 6px 12px; }
+body.compact .ai-output { min-height: 90px; font-size: 10px; }
+
+/* 摘要档：只留标题、标签与可滚动的摘要，详情按需展开 */
+body.compact[data-kn="peek"] .kn-metrics,
+body.compact[data-kn="peek"] .kn-tabs,
+body.compact[data-kn="peek"] .kn-panels,
+body.compact[data-kn="peek"] .kn-foot { display: none; }
+body.compact[data-kn="peek"] .kn-summary { flex: 1; min-height: 0; overflow-y: auto; margin-bottom: 0; }
+
+/* 摘要档：顶栏收成右上角一个关闭钮，把纵向空间全部让给摘要 */
+body.compact[data-kn="peek"] .kn-topbar {
+  position: absolute; top: 0; right: 0; left: auto; width: auto;
+  padding: 5px 8px; z-index: 3;
+}
+body.compact[data-kn="peek"] .kn-crumb { display: none; }
+body.compact[data-kn="peek"] .kn-hero { padding: 8px 34px 0 12px; }
+body.compact[data-kn="peek"] .kn-tags { padding-top: 5px; }
+
+/* 详情档：概览层折叠，正文占据主要高度（真正的分层，不重复堆叠） */
+body.compact[data-kn="full"] .kn-tags,
+body.compact[data-kn="full"] .kn-summary,
+body.compact[data-kn="full"] .kn-metrics,
+body.compact[data-kn="full"] .kn-latin { display: none; }
+body.compact[data-kn="full"] .kn-topbar { padding: 5px 12px 2px; }
+body.compact[data-kn="full"] .kn-hero { padding: 0 12px; align-items: center; }
+body.compact[data-kn="full"] .kn-index { font-size: 17px; }
+body.compact[data-kn="full"] .kn-hero h2 { font-size: 13px; }
+body.compact[data-kn="full"] .kn-tabs { margin: 6px 12px 0; }
+body.compact[data-kn="full"] .kn-foot { padding: 4px 12px; }
+body.compact[data-kn="full"] .kn-panels { flex: 1; min-height: 0; overflow-y: auto; padding-top: 8px; }
+
+body.compact .kn-empty { padding: 12px 14px; justify-content: flex-start; }
+body.compact .kn-empty-mark { display: none; }
+body.compact .kn-empty h2 { font-size: 15px; margin-bottom: 4px; }
+body.compact .kn-empty p { font-size: 10px; line-height: 1.6; }
+body.compact .kn-empty-tips { margin-top: 9px; gap: 4px; }
+body.compact .kn-empty-tips span { font-size: 8.5px; padding: 3px 7px; }
+
+/* ---------- 弹窗 / 解剖台在矮视口下的适配 ---------- */
+body.compact .modal { padding: 8px; }
+body.compact .modal-card {
+  width: min(640px, 94vw); max-height: calc(100dvh - 12px);
+  padding: 14px 16px; border-radius: 12px;
+}
+body.compact .modal-head h2 { font-size: 16px; }
+body.compact .modal-lead { margin: 8px 0 12px; font-size: 10px; line-height: 1.6; }
+body.compact .form-row { margin-bottom: 8px; }
+body.compact .form-row label { margin-bottom: 4px; }
+body.compact .form-row input, body.compact .form-row select { padding: 7px 9px; }
+body.compact .modal-note { margin-top: 10px; padding: 7px 9px; font-size: 9.5px; line-height: 1.6; }
+body.compact .modal-actions { margin-top: 12px; }
+body.compact .help-grid { grid-template-columns: 1fr 1fr; gap: 10px 16px; margin-top: 12px; }
+body.compact .help-grid h3 { margin-bottom: 5px; font-size: 10.5px; }
+body.compact .help-grid li { font-size: 9.5px; line-height: 1.6; margin-bottom: 3px; }
+
+body.compact #anatomy { grid-template-rows: 40px minmax(0, 1fr) 40px; }
+body.compact .ana-header { padding: 0 12px; gap: 8px; }
+body.compact .ana-head-mark { width: 24px; height: 24px; }
+body.compact .ana-eyebrow { display: none; }
+body.compact .ana-head-brand h2 { font-size: 12px; margin-top: 0; }
+body.compact .ana-tab { padding: 4px 9px; }
+body.compact .ana-tab-no { font-size: 12px; }
+body.compact .ana-tab-txt small { display: none; }
+body.compact .ana-close span { display: none; }
+body.compact .ana-main { grid-template-columns: minmax(0, 1fr) min(32vw, 230px); }
+body.compact .ana-left { display: none; }
+body.compact .ana-right { padding: 10px 12px; }
+body.compact .ana-right-head { margin-bottom: 6px; }
+body.compact .ana-right-head span { white-space: nowrap; }
+body.compact .ana-right-head b { display: none; }
+body.compact .ana-lg-item { padding: 5px 7px; margin-bottom: 2px; }
+body.compact .ana-detail { margin-top: 8px; min-height: 0; padding: 8px 10px; }
+body.compact .ana-detail p { margin-top: 5px; font-size: 9.5px; line-height: 1.6; }
+body.compact .ana-extra { margin-top: 8px; padding-top: 8px; }
+body.compact .ana-stage-head { padding: 6px 12px 0; font-size: 9.5px; }
+body.compact .ana-stage-foot { display: none; }
+body.compact .ana-footer { grid-template-columns: 1fr; justify-items: center; padding: 0 12px; }
+body.compact .ana-footer-note, body.compact .ana-footer-scale { display: none; }
+body.compact .ana-mode button { padding: 5px 11px; }
+
+/* ---------- 覆盖既有 max-width 断点在矮横屏下的残留值 ----------
+   640×360 一类窄横屏会同时命中 @media (max-width:720px) 与 (max-width:1100px)，
+   那里写了 display:none / left:10px / 解剖台双行网格，必须显式复位。 */
+body.compact #navigator,
+body.compact #environment,
+body.compact #knowledge { display: flex; flex-direction: column; }
+body.compact #knowledge { left: auto; }
+body.compact[data-kn="peek"] #knowledge { height: min(46vh, 182px); }
+body.compact[data-kn="full"] #knowledge { height: auto; }
+
+body.compact #anatomy { grid-template-rows: 42px minmax(0, 1fr) 40px; }
+body.compact .ana-header {
+  grid-template-columns: minmax(0, 1fr) auto auto; grid-template-rows: 1fr;
+  row-gap: 0; column-gap: 10px; padding: 0 12px;
+}
+body.compact .ana-spec-tabs { grid-column: auto; grid-row: auto; justify-self: center; }
+body.compact .ana-close { justify-self: end; }
+body.compact .ana-main { grid-template-columns: minmax(0, 1fr) min(32vw, 230px); grid-template-rows: minmax(0, 1fr); }
+body.compact .ana-left { display: none; }
+
+/* 降低动态效果偏好 */
+@media (prefers-reduced-motion: reduce) {
+  body.compact #navigator, body.compact #environment, body.compact #knowledge,
+  body.compact #left-drawer-tabs { transition-duration: .01ms; }
+}

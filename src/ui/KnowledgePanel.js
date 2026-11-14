@@ -67,6 +67,7 @@ export class KnowledgePanel {
     this.el.content.style.animation = 'none';
     void this.el.content.offsetHeight;
     this.el.content.style.animation = '';
+    window.dispatchEvent(new CustomEvent('malus:knowledge', { detail: { state: 'show', part } }));
   }
 
   hide() {
@@ -76,6 +77,7 @@ export class KnowledgePanel {
     this.el.panels.innerHTML = '';
     if (this.aiState === 'streaming' || this.aiState === 'loading') this.ai.abort();
     this.aiState = 'idle';
+    window.dispatchEvent(new CustomEvent('malus:knowledge', { detail: { state: 'hide' } }));
   }
 
   _buildPanels() {

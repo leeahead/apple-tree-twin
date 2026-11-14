@@ -163,9 +163,11 @@
         </svg>
       </div>
       <h2>点击任意器官</h2>
-      <p>摄像机将以贝塞尔弧线推进至最佳观赏视角，<br/>并展开该部位的植物学知识框架。</p>
+      <p class="kn-empty-mouse">摄像机将以贝塞尔弧线推进至最佳观赏视角，<br/>并展开该部位的植物学知识框架。</p>
+      <p class="kn-empty-touch">轻点器官自动聚焦，右侧摘要卡按需展开</p>
       <div class="kn-empty-tips">
-        <span>左键拖拽 · 旋转</span><span>滚轮 · 缩放</span><span>右键拖拽 · 平移</span>
+        <span class="tip-mouse">左键拖拽 · 旋转</span><span class="tip-mouse">滚轮 · 缩放</span><span class="tip-mouse">右键拖拽 · 平移</span>
+        <span class="tip-touch">单指拖拽 · 旋转</span><span class="tip-touch">双指捏合 · 缩放</span><span class="tip-touch">双指拖动 · 平移</span><span class="tip-touch">边缘滑动 · 侧栏</span>
       </div>
     </div>
 
@@ -199,6 +201,13 @@
         <button id="kn-recam" title="重新运镜">重新运镜 ↗</button>
       </div>
     </div>
+
+    <!-- 紧凑模式：知识抽屉的「摘要 / 详情」分级切换条 -->
+    <div id="kn-peek-bar" class="compact-only">
+      <span class="pk-grip" aria-hidden="true"></span>
+      <button id="kn-expand" type="button">上滑展开详情 · 形态 / 生理 / 园艺 / AI <b>⌃</b></button>
+      <button id="kn-collapse" type="button">收起为摘要 <b>⌄</b></button>
+    </div>
   </aside>
 
   <!-- ============ 底部状态栏 ============ -->
@@ -221,7 +230,42 @@
     </div>
   </footer>
 
-  <div id="hint" class="chrome hidden">点击器官开始探索 · 按 <kbd>Esc</kbd> 返回全景</div>
+  <!-- ============ 紧凑模式（手机横屏 / 低高度）：边缘把手与分层抽屉 ============ -->
+  <div id="compact-scrim" aria-hidden="true"></div>
+
+  <div id="compact-rail-left" class="compact-rail compact-only">
+    <button id="rail-nav" class="rail-btn" type="button" aria-label="展开器官索引" aria-expanded="false">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 3.5h4.5v13H3z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M10.5 4.5h6.5M10.5 10h6.5M10.5 15.5h6.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      <span>索引</span>
+    </button>
+    <button id="rail-env" class="rail-btn" type="button" aria-label="展开生境控制" aria-expanded="false">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="3.3" stroke="currentColor" stroke-width="1.2"/><path d="M10 1.6v2.1M10 16.3v2.1M1.6 10h2.1M16.3 10h2.1M4 4l1.5 1.5M14.5 14.5 16 16M16 4l-1.5 1.5M5.5 14.5 4 16" stroke="currentColor" stroke-width="1.05" stroke-linecap="round"/></svg>
+      <span>生境</span>
+    </button>
+    <button id="rail-ana" class="rail-btn" type="button" aria-label="打开解剖剖面">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="9.2" cy="10" r="6.3" stroke="currentColor" stroke-width="1.15"/><circle cx="9.2" cy="10" r="3.3" stroke="currentColor" stroke-width=".9"/><circle cx="9.2" cy="10" r="1.1" fill="currentColor"/><path d="M15.5 10H19" stroke="currentColor" stroke-width="1" stroke-dasharray="2 2"/></svg>
+      <span>解剖</span>
+    </button>
+  </div>
+
+  <div id="compact-rail-right" class="compact-rail compact-only">
+    <button id="rail-kn" class="rail-btn" type="button" aria-label="展开知识面板" aria-expanded="false">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 3.8c2.6-.9 4.9-.6 7 .9v11.5c-2.1-1.5-4.4-1.8-7-.9V3.8ZM17 3.8c-2.6-.9-4.9-.6-7 .9v11.5c2.1-1.5 4.4-1.8 7-.9V3.8Z" stroke="currentColor" stroke-width="1.15" stroke-linejoin="round"/></svg>
+      <span>知识</span>
+      <i id="rail-kn-dot" class="rail-dot" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <div id="left-drawer-tabs" class="compact-only" role="tablist" aria-label="左侧内容分层">
+    <button data-left="nav" class="active" type="button" role="tab" aria-selected="true">器官索引</button>
+    <button data-left="env" type="button" role="tab" aria-selected="false">生境控制</button>
+    <button id="left-drawer-close" class="ld-close" type="button" aria-label="收起侧栏">✕</button>
+  </div>
+
+  <div id="hint" class="chrome hidden">
+    <span class="hint-desktop">点击器官开始探索 · 按 <kbd>Esc</kbd> 返回全景</span>
+    <span class="hint-touch">轻点器官聚焦 · 双指缩放 / 平移 · 屏幕边缘滑动展开侧栏</span>
+  </div>
   <div id="tooltip" class="hidden"></div>
 
   <!-- ============ 解剖剖面视图（独立标本台，不改动三维树） ============ -->
@@ -376,6 +420,14 @@
           <li>兼容 OpenAI <code>/chat/completions</code> 协议，支持流式 SSE</li>
           <li>内置服务端代理 <code>/api/ai</code>，可用环境变量配置上游</li>
           <li>未配置或网络不可用时自动降级至内置离线知识库，并在界面明确标注来源</li>
+        </ul></div>
+        <div><h3>触屏 / 手机横屏</h3><ul>
+          <li>低高度横屏自动切换紧凑布局：三维画布保持全屏，左右内容收为屏幕边缘把手</li>
+          <li>轻点器官 → 右下角摘要卡；上滑或点「展开详情」查看完整知识框架，下滑「收起为摘要」</li>
+          <li>详情区左右滑动切换「形态解剖 / 生理功能 / 园艺要点 / AI 解读」；左栏顶部切换「器官索引 / 生境控制」</li>
+          <li>左边缘右滑展开左栏、右边缘左滑展开知识；抽屉内反向横滑、再次点把手或按 <kbd>Esc</kbd> 收起</li>
+          <li>单指拖拽旋转、双指捏合缩放、双指拖动平移；双击空白处返回全景</li>
+          <li>抽屉展开时取景中心自动让位，树体保持完整可见，射线拾取同步对齐</li>
         </ul></div>
       </div>
     </div>

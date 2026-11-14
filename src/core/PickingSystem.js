@@ -15,6 +15,7 @@ export class PickingSystem {
     this._roots = [];
     this._down = null;
     this._lastHover = 0;
+    this._lastTap = 0;
     this._hovered = null;
     this.refresh();
     this._bind();
@@ -54,8 +55,18 @@ export class PickingSystem {
       this._down = null;
       if (d > 6 || dt > 650) return;
       const hit = this._intersect(e);
-      if (hit) this.cb.onPick?.(hit);
-      else this.cb.onEmptyClick?.(hit);
+      if (hit) { this._lastTap = 0; this.cb.onPick?.(hit); return; }
+      // 触屏浏览器不保证派发 dblclick：用两次轻点空白返回全景
+      if (e.pointerType === 'touch') {
+        const now = performance.now();
+        if (this._lastTap && now - this._lastTap < 340) {
+          this._lastTap = 0;
+          this.cb.onDoubleClick?.();
+        } else {
+          this._lastTap = now;
+        }
+      }
+      this.cb.onEmptyClick?.(hit);
     });
     c.addEventListener('dblclick', () => this.cb.onDoubleClick?.());
     c.addEventListener('contextmenu', e => e.preventDefault());

@@ -13,6 +13,7 @@ import { AIInterpreter } from './services/AIInterpreter.js';
 import { KnowledgePanel } from './ui/KnowledgePanel.js';
 import { HUD } from './ui/HUD.js';
 import { AnatomyView } from './ui/AnatomyView.js';
+import { CompactLayout } from './ui/CompactLayout.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('stage');
@@ -60,6 +61,7 @@ async function boot() {
   let hud = null;
   let picking = null;
   let anatomy = null;
+  let compact = null;
   let currentPart = null;
   let started = false;
 
@@ -161,6 +163,8 @@ async function boot() {
     onAIConfigSaved: () => knowledge.refreshAIState(),
     onEscape: () => {
       if (anatomy?.active) { anatomy.close(); return; }
+      // 紧凑模式：Esc 先收起抽屉，再按一次才返回全景
+      if (compact?.isCompact() && compact.state.drawer !== 'none') { compact.close(); return; }
       resetAll();
     },
     onResize: () => sm.resize()
@@ -171,7 +175,7 @@ async function boot() {
     onPick: (hit) => selectPart(hit.part, hit.root),
     onHover: (hit) => { if (hit) hud.showPartTooltip(hit); else $('tooltip').classList.add('hidden'); },
     onHoverMove: (hit) => hud.showPartTooltip(hit),
-    onEmptyClick: () => {},
+    onEmptyClick: () => { if (compact?.isCompact()) compact.close(); },
     onDoubleClick: () => resetAll()
   });
 
@@ -181,8 +185,16 @@ async function boot() {
       picking.enabled = !on;
       $('tooltip').classList.add('hidden');
       hud.setAnatomy(on);
+      if (on && compact?.isCompact()) compact.close();
       if (!on) sm.resize();
     }
+  });
+
+  /* 7.6 手机横屏紧凑模式：边缘把手 + 分层抽屉 + 相机让位 */
+  compact = new CompactLayout({
+    sceneManager: sm,
+    knowledge,
+    onAnatomy: () => anatomy?.toggle()
   });
 
   /* 8. 初始环境状态同步 */
@@ -220,7 +232,7 @@ async function boot() {
   requestAnimationFrame(loop);
 
   // 暴露给控制台，便于评审检查与调试
-  window.__MALUS__ = { sm, tree, registry, director, picking, hud, knowledge, anatomy, ai, materials, THREE, WORLD, PHENO };
+  window.__MALUS__ = { sm, tree, registry, director, picking, hud, knowledge, anatomy, compact, ai, materials, THREE, WORLD, PHENO };
 }
 
 boot().catch(fatal);
