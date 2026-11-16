@@ -1,0 +1,1339 @@
+{
+  "book": "植物学（第三版）",
+  "editor": "金银根",
+  "publisher": "科学出版社",
+  "source_pdf_pages": 356,
+  "ocr_engine": "TextIn xParse (api free)",
+  "chapters": [
+    {
+      "file": "00_前置内容_封面·内容简介·编委会·前言.md",
+      "title": "前置内容：封面 · 内容简介 · 编委会 · 三版前言",
+      "source_line_range": [
+        1,
+        580
+      ],
+      "chars": 16673,
+      "headings_count": 11,
+      "toc": [
+        {
+          "level": 1,
+          "text": "普通高等教育“十三五”规划教材",
+          "line": 7
+        },
+        {
+          "level": 1,
+          "text": "“十二五”江苏省高等学校重点教材",
+          "line": 11
+        },
+        {
+          "level": 2,
+          "text": "植物学",
+          "line": 21
+        },
+        {
+          "level": 1,
+          "text": "植物学",
+          "line": 33
+        },
+        {
+          "level": 1,
+          "text": "（第三版）",
+          "line": 35
+        },
+        {
+          "level": 2,
+          "text": "内容简介",
+          "line": 43
+        },
+        {
+          "level": 1,
+          "text": "《植物学》（第三版）编写委员会",
+          "line": 89
+        },
+        {
+          "level": 2,
+          "text": "第三版前言",
+          "line": 153
+        },
+        {
+          "level": 2,
+          "text": "第二版前言",
+          "line": 201
+        },
+        {
+          "level": 2,
+          "text": "第一版前言",
+          "line": 243
+        },
+        {
+          "level": 2,
+          "text": "第三版前言",
+          "line": 269
+        }
+      ]
+    },
+    {
+      "file": "01_绪论.md",
+      "title": "绪论",
+      "source_line_range": [
+        581,
+        1071
+      ],
+      "chars": 27249,
+      "headings_count": 39,
+      "toc": [
+        {
+          "level": 2,
+          "text": "绪论",
+          "line": 1
+        },
+        {
+          "level": 2,
+          "text": "内容导读",
+          "line": 5
+        },
+        {
+          "level": 2,
+          "text": "第一节 植物与植物界",
+          "line": 25
+        },
+        {
+          "level": 2,
+          "text": "第二节 植物的多样性与保护",
+          "line": 164
+        },
+        {
+          "level": 2,
+          "text": "第三节 植物学发展简史",
+          "line": 260
+        },
+        {
+          "level": 2,
+          "text": "第四节 植物学及其主要分支学科",
+          "line": 318
+        },
+        {
+          "level": 2,
+          "text": "第五节 学习植物学的目的与方法",
+          "line": 342
+        },
+        {
+          "level": 2,
+          "text": "总结与复习",
+          "line": 358
+        },
+        {
+          "level": 2,
+          "text": "知识要点",
+          "line": 362
+        },
+        {
+          "level": 2,
+          "text": "复习思考",
+          "line": 382
+        },
+        {
+          "level": 2,
+          "text": "阅读与探究",
+          "line": 398
+        },
+        {
+          "level": 2,
+          "text": "阅读参考",
+          "line": 402
+        },
+        {
+          "level": 2,
+          "text": "探究学习",
+          "line": 432
+        }
+      ]
+    },
+    {
+      "file": "02_第一章_植物界基本类群与分类.md",
+      "title": "第一章　植物界基本类群与分类",
+      "source_line_range": [
+        1072,
+        2823
+      ],
+      "chars": 68503,
+      "headings_count": 151,
+      "toc": [
+        {
+          "level": 1,
+          "text": "植物界基本类群",
+          "line": 1
+        },
+        {
+          "level": 2,
+          "text": "与分类",
+          "line": 3
+        },
+        {
+          "level": 2,
+          "text": "内容导读",
+          "line": 7
+        },
+        {
+          "level": 1,
+          "text": "第一节 植物分类的基础知识",
+          "line": 45
+        },
+        {
+          "level": 2,
+          "text": "一、植物分类的方法与分类知识的来源",
+          "line": 47
+        },
+        {
+          "level": 2,
+          "text": "二、植物分类的等级与命名法则",
+          "line": 103
+        },
+        {
+          "level": 2,
+          "text": "三、植物分类检索表的编制和使用",
+          "line": 187
+        },
+        {
+          "level": 1,
+          "text": "第二节 植物界基本类群与演化规律",
+          "line": 207
+        },
+        {
+          "level": 2,
+          "text": "植物界各门及其主要特征检索表：",
+          "line": 335
+        },
+        {
+          "level": 2,
+          "text": "12．植物体有维管束",
+          "line": 383
+        },
+        {
+          "level": 2,
+          "text": "一、藻类植物",
+          "line": 393
+        },
+        {
+          "level": 2,
+          "text": "2．绿藻门（Chlorophyta）",
+          "line": 487
+        },
+        {
+          "level": 2,
+          "text": "3．红藻门（Rhodophyta）",
+          "line": 533
+        },
+        {
+          "level": 2,
+          "text": "4. 褐藻门（Phaeophyta）",
+          "line": 557
+        },
+        {
+          "level": 2,
+          "text": "（三）藻类植物与人类的关系",
+          "line": 581
+        },
+        {
+          "level": 2,
+          "text": "二、菌类植物",
+          "line": 597
+        },
+        {
+          "level": 2,
+          "text": "三、地衣植物门",
+          "line": 821
+        },
+        {
+          "level": 2,
+          "text": "四、苔藓植物门",
+          "line": 895
+        },
+        {
+          "level": 1,
+          "text": "2）代表属种",
+          "line": 946
+        },
+        {
+          "level": 1,
+          "text": "2. 藓纲（Musci）",
+          "line": 966
+        },
+        {
+          "level": 2,
+          "text": "1）基本特征",
+          "line": 968
+        },
+        {
+          "level": 2,
+          "text": "2）代表属种",
+          "line": 974
+        },
+        {
+          "level": 2,
+          "text": "（1）泥炭藓属（Sphagnum）",
+          "line": 976
+        },
+        {
+          "level": 2,
+          "text": "（2）葫芦藓属（Funaria）",
+          "line": 980
+        },
+        {
+          "level": 1,
+          "text": "（三）苔藓植物与人类的关系",
+          "line": 990
+        },
+        {
+          "level": 1,
+          "text": "五、蕨类植物门",
+          "line": 1010
+        },
+        {
+          "level": 2,
+          "text": "（一）蕨类植物的一般特征",
+          "line": 1012
+        },
+        {
+          "level": 2,
+          "text": "（二）蕨类植物的分类与代表植物",
+          "line": 1036
+        },
+        {
+          "level": 1,
+          "text": "5. 真蕨亚门（Filicophnytina）",
+          "line": 1094
+        },
+        {
+          "level": 2,
+          "text": "1）基本特征",
+          "line": 1096
+        },
+        {
+          "level": 2,
+          "text": "2）代表植物",
+          "line": 1104
+        },
+        {
+          "level": 2,
+          "text": "（2）薄囊蕨纲",
+          "line": 1114
+        },
+        {
+          "level": 2,
+          "text": "（三）蕨类植物与人类的关系",
+          "line": 1122
+        },
+        {
+          "level": 1,
+          "text": "六、裸子植物门",
+          "line": 1144
+        },
+        {
+          "level": 2,
+          "text": "（一）裸子植物的一般特征",
+          "line": 1146
+        },
+        {
+          "level": 2,
+          "text": "（二）裸子植物的分类与代表植物",
+          "line": 1213
+        },
+        {
+          "level": 2,
+          "text": "（三）裸子植物的起源与演化",
+          "line": 1337
+        },
+        {
+          "level": 2,
+          "text": "（四）裸子植物与人类的关系",
+          "line": 1367
+        },
+        {
+          "level": 1,
+          "text": "七、被子植物门",
+          "line": 1379
+        },
+        {
+          "level": 2,
+          "text": "（一）被子植物的一般特征",
+          "line": 1381
+        },
+        {
+          "level": 2,
+          "text": "（二）被子植物的生活史特点",
+          "line": 1407
+        },
+        {
+          "level": 2,
+          "text": "（三）被子植物与人类的关系",
+          "line": 1413
+        },
+        {
+          "level": 1,
+          "text": "八、植物界的演化规律",
+          "line": 1419
+        },
+        {
+          "level": 2,
+          "text": "1）在形态结构方面",
+          "line": 1423
+        },
+        {
+          "level": 2,
+          "text": "2）在生态习性方面",
+          "line": 1427
+        },
+        {
+          "level": 2,
+          "text": "3）在生殖方式方面",
+          "line": 1431
+        },
+        {
+          "level": 2,
+          "text": "4）在生活史方面",
+          "line": 1435
+        },
+        {
+          "level": 1,
+          "text": "总结与复习",
+          "line": 1447
+        },
+        {
+          "level": 1,
+          "text": "知识要点",
+          "line": 1449
+        },
+        {
+          "level": 1,
+          "text": "复习思考",
+          "line": 1487
+        },
+        {
+          "level": 1,
+          "text": "阅读与探究",
+          "line": 1519
+        },
+        {
+          "level": 2,
+          "text": "阅读参考",
+          "line": 1521
+        },
+        {
+          "level": 1,
+          "text": "探究学习",
+          "line": 1555
+        }
+      ]
+    },
+    {
+      "file": "03_第二章_植物细胞与组织.md",
+      "title": "第二章　植物细胞与组织",
+      "source_line_range": [
+        2824,
+        3994
+      ],
+      "chars": 43062,
+      "headings_count": 95,
+      "toc": [
+        {
+          "level": 1,
+          "text": "植物细胞和组织",
+          "line": 1
+        },
+        {
+          "level": 2,
+          "text": "内容导读",
+          "line": 5
+        },
+        {
+          "level": 1,
+          "text": "第一节 植物细胞",
+          "line": 31
+        },
+        {
+          "level": 2,
+          "text": "一、植物细胞的形态与结构",
+          "line": 45
+        },
+        {
+          "level": 1,
+          "text": "3）核糖体",
+          "line": 119
+        },
+        {
+          "level": 1,
+          "text": "4）内质网",
+          "line": 123
+        },
+        {
+          "level": 2,
+          "text": "5）高尔基体",
+          "line": 143
+        },
+        {
+          "level": 2,
+          "text": "6）液泡",
+          "line": 147
+        },
+        {
+          "level": 2,
+          "text": "7）溶酶体和圆球体",
+          "line": 159
+        },
+        {
+          "level": 2,
+          "text": "8）微体",
+          "line": 167
+        },
+        {
+          "level": 2,
+          "text": "9）细胞骨架",
+          "line": 175
+        },
+        {
+          "level": 2,
+          "text": "3．细胞核",
+          "line": 189
+        },
+        {
+          "level": 2,
+          "text": "（二）细胞壁",
+          "line": 225
+        },
+        {
+          "level": 2,
+          "text": "（三）植物细胞的后含物",
+          "line": 305
+        },
+        {
+          "level": 1,
+          "text": "二、植物细胞的分裂与分化",
+          "line": 357
+        },
+        {
+          "level": 2,
+          "text": "（一）植物细胞的分裂",
+          "line": 359
+        },
+        {
+          "level": 2,
+          "text": "②中期I(metaphase I）",
+          "line": 465
+        },
+        {
+          "level": 2,
+          "text": "（二）植物细胞的生长与分化",
+          "line": 501
+        },
+        {
+          "level": 1,
+          "text": "第二节植物组织",
+          "line": 511
+        },
+        {
+          "level": 2,
+          "text": "一、分生组织",
+          "line": 533
+        },
+        {
+          "level": 2,
+          "text": "二、成熟组织",
+          "line": 565
+        },
+        {
+          "level": 2,
+          "text": "三、复合组织和组织系统",
+          "line": 825
+        },
+        {
+          "level": 1,
+          "text": "知识要点",
+          "line": 879
+        },
+        {
+          "level": 1,
+          "text": "复习思考",
+          "line": 941
+        },
+        {
+          "level": 1,
+          "text": "阅读与探究",
+          "line": 977
+        },
+        {
+          "level": 1,
+          "text": "阅读参考",
+          "line": 981
+        },
+        {
+          "level": 2,
+          "text": "（1）本章知识参考阅读：",
+          "line": 983
+        },
+        {
+          "level": 2,
+          "text": "（2）知识拓宽参考阅读：",
+          "line": 989
+        },
+        {
+          "level": 1,
+          "text": "探究学习",
+          "line": 1001
+        }
+      ]
+    },
+    {
+      "file": "04_第三章_被子植物营养器官的形态·结构与功能.md",
+      "title": "第三章　被子植物营养器官的形态、结构与功能",
+      "source_line_range": [
+        3995,
+        5732
+      ],
+      "chars": 62755,
+      "headings_count": 177,
+      "toc": [
+        {
+          "level": 1,
+          "text": "被子植物营养器官的",
+          "line": 1
+        },
+        {
+          "level": 2,
+          "text": "形态、结构与功能",
+          "line": 3
+        },
+        {
+          "level": 2,
+          "text": "内容导读",
+          "line": 7
+        },
+        {
+          "level": 1,
+          "text": "学法",
+          "line": 37
+        },
+        {
+          "level": 1,
+          "text": "第一节 根的形态、结构与功能",
+          "line": 51
+        },
+        {
+          "level": 2,
+          "text": "一、根的形态",
+          "line": 55
+        },
+        {
+          "level": 2,
+          "text": "二、根的结构",
+          "line": 73
+        },
+        {
+          "level": 2,
+          "text": "三、侧根的发生",
+          "line": 308
+        },
+        {
+          "level": 2,
+          "text": "四、根瘤与菌根",
+          "line": 340
+        },
+        {
+          "level": 1,
+          "text": "第二节茎的形态、结构与功能",
+          "line": 388
+        },
+        {
+          "level": 2,
+          "text": "一、茎的形态与分枝",
+          "line": 390
+        },
+        {
+          "level": 2,
+          "text": "二、茎的结构",
+          "line": 514
+        },
+        {
+          "level": 1,
+          "text": "1. 表皮",
+          "line": 736
+        },
+        {
+          "level": 1,
+          "text": "2. 基本组织",
+          "line": 740
+        },
+        {
+          "level": 1,
+          "text": "3．维管束",
+          "line": 746
+        },
+        {
+          "level": 1,
+          "text": "（四）禾本科植物茎的初生增粗生长与居间生长",
+          "line": 774
+        },
+        {
+          "level": 2,
+          "text": "1.初生增粗生长",
+          "line": 776
+        },
+        {
+          "level": 2,
+          "text": "2. 居间生长",
+          "line": 784
+        },
+        {
+          "level": 1,
+          "text": "第三节 叶的形态、结构与功能",
+          "line": 788
+        },
+        {
+          "level": 2,
+          "text": "一、叶的形态与组成",
+          "line": 792
+        },
+        {
+          "level": 2,
+          "text": "二、叶的结构",
+          "line": 850
+        },
+        {
+          "level": 1,
+          "text": "第四节 植物的适应性与整体性",
+          "line": 1000
+        },
+        {
+          "level": 2,
+          "text": "一、营养器官的变态与变态器官",
+          "line": 1002
+        },
+        {
+          "level": 2,
+          "text": "二、植物营养器官的形态、结构与环境的关系",
+          "line": 1232
+        },
+        {
+          "level": 2,
+          "text": "三、营养器官间结构与功能的统一性",
+          "line": 1266
+        },
+        {
+          "level": 1,
+          "text": "复习思考",
+          "line": 1386
+        },
+        {
+          "level": 2,
+          "text": "阅读与探究",
+          "line": 1460
+        },
+        {
+          "level": 2,
+          "text": "阅读参考",
+          "line": 1464
+        },
+        {
+          "level": 2,
+          "text": "探究学习",
+          "line": 1484
+        }
+      ]
+    },
+    {
+      "file": "05_第四章_被子植物生殖器官的形态·结构与功能.md",
+      "title": "第四章　被子植物生殖器官的形态、结构与功能",
+      "source_line_range": [
+        5733,
+        7314
+      ],
+      "chars": 62210,
+      "headings_count": 143,
+      "toc": [
+        {
+          "level": 1,
+          "text": "被子植物生殖器官的",
+          "line": 1
+        },
+        {
+          "level": 2,
+          "text": "形态、结构与功能",
+          "line": 3
+        },
+        {
+          "level": 2,
+          "text": "内容导读",
+          "line": 7
+        },
+        {
+          "level": 2,
+          "text": "第一节 花的组成与发生",
+          "line": 49
+        },
+        {
+          "level": 1,
+          "text": "1. 花柄和花托",
+          "line": 61
+        },
+        {
+          "level": 1,
+          "text": "2．花萼",
+          "line": 67
+        },
+        {
+          "level": 1,
+          "text": "3．花冠",
+          "line": 81
+        },
+        {
+          "level": 1,
+          "text": "4．雄蕊（群）",
+          "line": 87
+        },
+        {
+          "level": 2,
+          "text": "1）雄蕊的形态与组成",
+          "line": 89
+        },
+        {
+          "level": 2,
+          "text": "2）雄蕊群的类型与特征",
+          "line": 93
+        },
+        {
+          "level": 1,
+          "text": "5．雌蕊（群）",
+          "line": 99
+        },
+        {
+          "level": 2,
+          "text": "1）雌蕊的组成",
+          "line": 101
+        },
+        {
+          "level": 2,
+          "text": "2）雌蕊（群）的类型",
+          "line": 113
+        },
+        {
+          "level": 1,
+          "text": "（二）禾本科植物的花及小穗",
+          "line": 121
+        },
+        {
+          "level": 1,
+          "text": "二、花芽分化",
+          "line": 133
+        },
+        {
+          "level": 2,
+          "text": "1. 双子叶植物的花芽分化",
+          "line": 143
+        },
+        {
+          "level": 2,
+          "text": "2.禾本科植物的花芽分化-小麦的幼穗分化",
+          "line": 153
+        },
+        {
+          "level": 1,
+          "text": "第二节 雄蕊的发育与结构",
+          "line": 213
+        },
+        {
+          "level": 2,
+          "text": "一、花药的发育与结构",
+          "line": 217
+        },
+        {
+          "level": 2,
+          "text": "二、花粉粒的发育与结构",
+          "line": 253
+        },
+        {
+          "level": 2,
+          "text": "三、花粉植物与单倍体育种",
+          "line": 319
+        },
+        {
+          "level": 2,
+          "text": "四、雄性不育与利用",
+          "line": 337
+        },
+        {
+          "level": 1,
+          "text": "第三节 雌蕊的发育与结构",
+          "line": 351
+        },
+        {
+          "level": 2,
+          "text": "一、柱头的形态与结构",
+          "line": 363
+        },
+        {
+          "level": 2,
+          "text": "二、花柱的形态与结构",
+          "line": 379
+        },
+        {
+          "level": 2,
+          "text": "三、子房的结构",
+          "line": 393
+        },
+        {
+          "level": 1,
+          "text": "第四节 开花、传粉与受精",
+          "line": 563
+        },
+        {
+          "level": 2,
+          "text": "一、开花",
+          "line": 565
+        },
+        {
+          "level": 2,
+          "text": "二、传粉",
+          "line": 587
+        },
+        {
+          "level": 2,
+          "text": "三、受精",
+          "line": 689
+        },
+        {
+          "level": 2,
+          "text": "四、环境条件对开花、传粉和受精的影响",
+          "line": 783
+        },
+        {
+          "level": 1,
+          "text": "第五节 种子的发育与结构",
+          "line": 791
+        },
+        {
+          "level": 1,
+          "text": "一、种子的发育",
+          "line": 801
+        },
+        {
+          "level": 2,
+          "text": "（一）胚乳的发育",
+          "line": 803
+        },
+        {
+          "level": 2,
+          "text": "（二）胚的发育与结构",
+          "line": 855
+        },
+        {
+          "level": 1,
+          "text": "二、种子的组成和基本类型",
+          "line": 961
+        },
+        {
+          "level": 2,
+          "text": "（一）种子的形态",
+          "line": 963
+        },
+        {
+          "level": 2,
+          "text": "（二）种子的组成",
+          "line": 967
+        },
+        {
+          "level": 2,
+          "text": "（三）种子的基本类型",
+          "line": 989
+        },
+        {
+          "level": 1,
+          "text": "第六节 果实的发育与结构",
+          "line": 1045
+        },
+        {
+          "level": 2,
+          "text": "一、果实的发育和结构",
+          "line": 1049
+        },
+        {
+          "level": 2,
+          "text": "二、单性结实",
+          "line": 1105
+        },
+        {
+          "level": 2,
+          "text": "三、果实的类型",
+          "line": 1113
+        },
+        {
+          "level": 2,
+          "text": "四、果实与种子的传播",
+          "line": 1117
+        },
+        {
+          "level": 1,
+          "text": "第七节 被子植物的生活史",
+          "line": 1151
+        },
+        {
+          "level": 2,
+          "text": "一、种子萌发与幼苗类型",
+          "line": 1153
+        },
+        {
+          "level": 2,
+          "text": "二、被子植物的生活史过程和特征",
+          "line": 1217
+        },
+        {
+          "level": 1,
+          "text": "知识要点",
+          "line": 1245
+        },
+        {
+          "level": 2,
+          "text": "复习思考",
+          "line": 1281
+        },
+        {
+          "level": 2,
+          "text": "阅读与探究",
+          "line": 1323
+        },
+        {
+          "level": 1,
+          "text": "阅读参考",
+          "line": 1327
+        },
+        {
+          "level": 2,
+          "text": "（1）本章知识参考阅读：",
+          "line": 1329
+        },
+        {
+          "level": 2,
+          "text": "（2）知识拓宽参考阅读：",
+          "line": 1339
+        },
+        {
+          "level": 1,
+          "text": "探究学习",
+          "line": 1347
+        }
+      ]
+    },
+    {
+      "file": "06_第五章_被子植物主要分科概述.md",
+      "title": "第五章　被子植物主要分科概述",
+      "source_line_range": [
+        7315,
+        10551
+      ],
+      "chars": 106881,
+      "headings_count": 149,
+      "toc": [
+        {
+          "level": 1,
+          "text": "被子植物主要分科概述",
+          "line": 1
+        },
+        {
+          "level": 1,
+          "text": "内容导读",
+          "line": 5
+        },
+        {
+          "level": 2,
+          "text": "教法与学法",
+          "line": 11
+        },
+        {
+          "level": 2,
+          "text": "教法",
+          "line": 13
+        },
+        {
+          "level": 2,
+          "text": "学法",
+          "line": 21
+        },
+        {
+          "level": 1,
+          "text": "第一节 被子植物分类的形态学基础知识",
+          "line": 31
+        },
+        {
+          "level": 2,
+          "text": "一、茎",
+          "line": 35
+        },
+        {
+          "level": 2,
+          "text": "（一）茎的生活习性",
+          "line": 37
+        },
+        {
+          "level": 2,
+          "text": "二、叶",
+          "line": 75
+        },
+        {
+          "level": 2,
+          "text": "6. 叶裂",
+          "line": 372
+        },
+        {
+          "level": 2,
+          "text": "三、花",
+          "line": 540
+        },
+        {
+          "level": 1,
+          "text": "2．花瓣的排列",
+          "line": 614
+        },
+        {
+          "level": 1,
+          "text": "（二）雄蕊类型与特征",
+          "line": 628
+        },
+        {
+          "level": 2,
+          "text": "1.雄蕊的类型",
+          "line": 630
+        },
+        {
+          "level": 2,
+          "text": "2．花药的着生方式",
+          "line": 654
+        },
+        {
+          "level": 2,
+          "text": "3．花药开裂的方式",
+          "line": 674
+        },
+        {
+          "level": 1,
+          "text": "（三）雌蕊（群）的类型与特征",
+          "line": 684
+        },
+        {
+          "level": 2,
+          "text": "1．雌蕊的类型",
+          "line": 686
+        },
+        {
+          "level": 2,
+          "text": "2．子房的位置",
+          "line": 716
+        },
+        {
+          "level": 2,
+          "text": "3．胎座的类型",
+          "line": 748
+        },
+        {
+          "level": 2,
+          "text": "4. 胚珠的类型",
+          "line": 790
+        },
+        {
+          "level": 1,
+          "text": "四、花序的类型与特征",
+          "line": 852
+        },
+        {
+          "level": 2,
+          "text": "（一）有限花序",
+          "line": 854
+        },
+        {
+          "level": 2,
+          "text": "（二）无限花序",
+          "line": 892
+        },
+        {
+          "level": 1,
+          "text": "五、果实的类型与特征",
+          "line": 934
+        },
+        {
+          "level": 2,
+          "text": "（一）单果",
+          "line": 938
+        },
+        {
+          "level": 2,
+          "text": "（二）聚合果",
+          "line": 1012
+        },
+        {
+          "level": 2,
+          "text": "（三）复果",
+          "line": 1042
+        },
+        {
+          "level": 1,
+          "text": "第二节 被子植物的分类原则",
+          "line": 1046
+        },
+        {
+          "level": 1,
+          "text": "第三节 被子植物的分科概述",
+          "line": 1086
+        },
+        {
+          "level": 2,
+          "text": "一、双子叶植物纲",
+          "line": 1120
+        },
+        {
+          "level": 2,
+          "text": "III.蝶形花科（Fabaceae,Papilionaceae）↑K $\\zeta _{(5)}$ $C_{5}A_{(9)+1},(5)+(5),$ $(10),10\\underline {G}1:1$",
+          "line": 1519
+        },
+        {
+          "level": 2,
+          "text": "II.芸香科（Rutaceae）)*K $(4\\sim 5)C_{4\\sim 5}A_{8\\sim 10}\\underline {G}(4-5:4-5)$",
+          "line": 1593
+        },
+        {
+          "level": 1,
+          "text": "（十六）伞形目（Apiales,Umbellales）",
+          "line": 1609
+        },
+        {
+          "level": 1,
+          "text": "I．五加科（Araliaceae)*KsCsA3G(5~2:2~5）",
+          "line": 1615
+        },
+        {
+          "level": 1,
+          "text": "（十七）杜鹃花目（Ericales）",
+          "line": 1641
+        },
+        {
+          "level": 1,
+          "text": "（十八）玄参目（Scrophulariales）",
+          "line": 1663
+        },
+        {
+          "level": 1,
+          "text": "II.玄参科（Scrophulariaceae）↑稀＊ $K_{4\\sim 5,(4\\sim 5)}C_{(4\\sim 5)}A_{4}$  稀2． $s\\underline {G}(2:2)$",
+          "line": 1685
+        },
+        {
+          "level": 1,
+          "text": "（十九）茄目（Solanales）",
+          "line": 1699
+        },
+        {
+          "level": 2,
+          "text": "（二十）唇形目（Lamiales）",
+          "line": 1721
+        },
+        {
+          "level": 2,
+          "text": "（二十一）菊目（Asterales）",
+          "line": 1743
+        },
+        {
+          "level": 2,
+          "text": "（二十二）其他重要的双子叶植物",
+          "line": 1789
+        },
+        {
+          "level": 1,
+          "text": "二、单子叶植物纲",
+          "line": 1823
+        },
+        {
+          "level": 2,
+          "text": "（一）泽泻目（Alismatales）",
+          "line": 1825
+        },
+        {
+          "level": 2,
+          "text": "（二）槟榔（棕榈）目（Arecales）",
+          "line": 1843
+        },
+        {
+          "level": 2,
+          "text": "（三）天南星目（Arales）",
+          "line": 1865
+        },
+        {
+          "level": 2,
+          "text": "（四）百合目（Liliales）",
+          "line": 1885
+        },
+        {
+          "level": 2,
+          "text": "（五）鸭跖草目（Commelinales）",
+          "line": 1913
+        },
+        {
+          "level": 2,
+          "text": "（六）莎草目（Cperales）",
+          "line": 1933
+        },
+        {
+          "level": 1,
+          "text": "II.禾本科（Gramineae,Poaceae)＊ $P_{2\\sim 3}A_{3,3+3}\\underline {G}(2\\sim 3:1$",
+          "line": 1959
+        },
+        {
+          "level": 2,
+          "text": "1）竹亚科（Bambusoideae）",
+          "line": 1965
+        },
+        {
+          "level": 2,
+          "text": "2）禾亚科（Agrostidoideae）",
+          "line": 1983
+        },
+        {
+          "level": 2,
+          "text": "（七）兰目（Orchidales）",
+          "line": 2011
+        },
+        {
+          "level": 2,
+          "text": "（八）其他重要的单子叶植物",
+          "line": 2037
+        },
+        {
+          "level": 1,
+          "text": "第四节 被子植物的起源与分类系统",
+          "line": 2065
+        },
+        {
+          "level": 2,
+          "text": "一、被子植物的起源与进化",
+          "line": 2073
+        },
+        {
+          "level": 2,
+          "text": "二、被子植物的系统演化与分类系统简介",
+          "line": 2137
+        },
+        {
+          "level": 1,
+          "text": "知识要点",
+          "line": 2231
+        },
+        {
+          "level": 2,
+          "text": "复习思考",
+          "line": 2312
+        },
+        {
+          "level": 1,
+          "text": "探究学习",
+          "line": 2360
+        }
+      ]
+    }
+  ],
+  "total_chars": 387333
+}

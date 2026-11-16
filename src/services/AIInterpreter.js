@@ -2,8 +2,18 @@
  * AI 大模型解读服务
  *  · 兼容 OpenAI /chat/completions 协议，支持 SSE 流式输出
  *  · 双通道：浏览器直连（演示用） / 本地服务端代理 /api/ai（推荐，密钥不下发前端）
- *  · 未配置或调用失败时，自动降级为内置离线知识库，并在 UI 明确标注来源
+ *  · 课程助教问答：先检索《植物学（第三版）》教材片段，再让模型只依据片段作答（RAG）
+ *  · 未配置或调用失败时，自动降级为教材原文摘录，界面明确标注来源，绝不生成无依据内容
  */
+import {
+  BotanyRetriever, buildOfflineAnswer, cite,
+  BOTANY_SOURCE, SCOPE, SUGGESTED_QUESTIONS, CORPUS_STATS
+} from './BotanyRetriever.js';
+
+export { BOTANY_SOURCE, SCOPE, SUGGESTED_QUESTIONS, CORPUS_STATS, cite };
+
+/** 全站共享一个语料实例（懒加载一次，之后复用） */
+export const botany = new BotanyRetriever();
 
 const STORAGE_KEY = 'malus-ai-config-v1';
 
@@ -18,12 +28,7 @@ export const PROVIDERS = {
 };
 
 const DEFAULT_CONFIG = {
-  provider: 'custom',
-  endpoint: '',
-  model: '',
-  apiKey: '',
-  stream: true,
-  enabled: false
+  provider: 'custom', endpoint: '', model: '', apiKey: '', stream: true, enabled: false
 };
 
 function load() {
@@ -69,19 +74,71 @@ export function renderMarkdown(text) {
   return out;
 }
 
+/** 课程助教系统提示词：把「不编造 / 有依据 / 能纠错 / 会拒答」写成硬规则 */
+export function courseSystemPrompt() {
+  return [
+    `你是《植物学》课程助教，服务对象是修读该课程、并使用苹果树（Malus domestica）3D 数字孪生标本学习的学生。`,
+    `唯一事实依据 = 下面提供的 ${BOTANY_SOURCE.short}（${BOTANY_SOURCE.editor}，${BOTANY_SOURCE.publisher}）教材原文片段，每条都附有章节与教材页码。`,
+    '',
+    '硬性规则：',
+    '1. 只依据片段作答。片段之外的任何数据、术语、结论、品种、剂量、文献一律不得出现；不要凭常识「补充」「校正」「深化」，也不要把内置知识摘要当作教材内容。',
+    '2. 每个结论后用 [依据：第X章… · 教材 Pxxx] 标注来源；没有片段支撑的话就不写。',
+    '3. 片段不足以完整回答时，明确说「教材片段未涵盖这一点」，并建议换用教材术语、点选三维标本对应部位或查阅该章节；绝不猜测。',
+    '4. 涉及农药剂量、品种砧木配组、当地规程、最新文献等教材未载内容，直接说明不作答并给出合适建议。',
+    '5. 用户指出上一轮回答有误时：先明确承认并道歉，重新依据片段核对；若片段无法判定就说无法确认，不要辩解、不要坚持原答案。',
+    '6. 追问要联系上文：「它 / 这个 / 接着说 / 再详细些」指代上一轮主题，不要当成新问题重新开场。',
+    '7. 中文、要点式，300–500 字，不写空话，不整段复述原文。',
+    '8. 教材片段来自 OCR，个别字词可能有识别误差；可顺明显错别字，但不得改动专业含义。'
+  ].join('\n');
+}
+
+/** 部位解读的系统提示词（与课程助教同一套「只依据教材」口径） */
 function systemPrompt() {
   return [
-    '你是果树学与园艺学专家，服务于一份苹果树（Malus domestica Borkh.，蔷薇科苹果属）3D 数字孪生参赛作品。',
-    '请针对用户指定的器官，给出科学严谨、可操作、有层次的中文解读。',
+    `你是果树学与植物学课程助教，服务于苹果树（Malus domestica Borkh.）3D 数字孪生参赛作品。`,
+    `事实依据只能来自下面提供的 ${BOTANY_SOURCE.short} 教材原文片段。`,
     '要求：',
-    '1. 先给出该结构的规范植物学名称与拉丁术语，说明其解剖归属；',
-    '2. 分为「形态解剖」「生理机制」「园艺实践」三个层次，用 Markdown 小标题组织；',
-    '3. 园艺实践须具体到修剪、病虫害防治、施肥/水分管理中的相关要点，并说明适用条件；',
-    '4. 涉及农药、肥料与植物生长调节剂时，只给通用原则与浓度区间的常见范围，必须提示按当地登记标签、安全间隔期与农技部门意见执行；',
-    '5. 明确区分「通用结论」与「随品种、砧木、树龄、土壤、气候而变」的部分，不编造数据、品种配组或文献；',
-    '6. 若参考资料中的说法存在版本差异或不确定性，直接指出，不要含糊带过；',
-    '7. 总长控制在 500–800 字，使用要点式表达，避免空话。'
+    '1. 先给出规范植物学名称与拉丁术语，说明解剖归属；',
+    '2. 分为「形态解剖」「生理机制」「园艺实践」三层，用 Markdown 小标题组织；',
+    '3. 教材片段没有给出的具体数据、品种、剂量、文献一律不得编造；内置知识摘要只是辅助线索，与教材冲突时以教材为准，不得当作教材依据引用；',
+    '4. 每个要点后标注 [依据：第X章… · 教材 Pxxx]；片段未涵盖的部分明确说明「教材片段未涵盖」，不猜测；',
+    '5. 园艺实践只给通用原则，涉及农药、肥料、调节剂必须提示按当地登记标签、安全间隔期与农技部门意见执行，并说明这不来自教材；',
+    '6. 区分「通用结论」与「随品种、砧木、树龄、土壤、气候而变」的部分；',
+    '7. 总长 500–800 字，要点式，避免空话。'
   ].join('\n');
+}
+
+/** 把检索到的教材片段拼成可注入的上下文 */
+export function formatEvidence(result, maxChars = 700) {
+  if (!result?.hits?.length) return '';
+  return result.hits.map((h, i) =>
+    `[${i + 1}] ${h.chunk.text.slice(0, maxChars)}\n（依据：${cite(h)}）`
+  ).join('\n\n');
+}
+
+/** 课程多轮对话的 messages 构造 */
+export function buildCourseMessages(question, { result, part = null, history = [], correction = false } = {}) {
+  const evidence = formatEvidence(result);
+  const his = history.slice(-6).map(m =>
+    `${m.role === 'user' ? '学生' : '助教'}：${String(m.text || '').slice(0, 500)}`
+  ).join('\n');
+  const blocks = [
+    '【教材原文片段 · 唯一事实依据】',
+    evidence || '（无）',
+    '',
+    part ? `【当前三维标本选中部位】${part.label}${part.latin ? `（${part.latin}）` : ''} · ${part.group || ''}` : '',
+    result ? `【知识范围】${result.scopeLabel}` : '',
+    his ? `【最近对话】\n${his}` : '',
+    correction ? '【纠错】学生指出上一轮回答有误，请重新依据片段核对。' : '',
+    '',
+    `【学生问题】${question}`,
+    '',
+    '请依据上述片段作答并逐条标注出处；片段不足或超出范围时按规则 3 / 4 / 5 处理。'
+  ];
+  return [
+    { role: 'system', content: courseSystemPrompt() },
+    { role: 'user', content: blocks.filter(Boolean).join('\n') }
+  ];
 }
 
 export class AIInterpreter {
@@ -130,31 +187,41 @@ export class AIInterpreter {
       apiKey: c.provider === 'proxy' ? undefined : c.apiKey,
       model: c.model,
       messages,
-      temperature: 0.55,
+      temperature: 0.35,
       max_tokens: 1400,
       stream,
       ...overrides
     });
   }
 
-  buildMessages(part, knowledge) {
+  /** 检索当前部位的教材片段，返回可直接注入的上下文字符串 */
+  async _courseContext(query, part) {
+    try {
+      await botany.load();
+      const r = botany.retrieve(query, { part, topK: 3 });
+      return r.confident ? formatEvidence(r) : '';
+    } catch { return ''; }
+  }
+
+  buildMessages(part, knowledge, courseContext = '') {
     const ctx = [
+      courseContext ? `【教材原文片段 · 唯一事实依据】\n${courseContext}` : '【教材原文片段】本次未检索到可用片段，请说明无法依据教材作答，不要凭内置摘要编造。',
       `【部位】${part.label}（${part.latin}）`,
       `【所属系统】${part.group}`,
-      `【内置知识摘要】${knowledge.summary || ''}`,
-      `【形态解剖】${stripHtml(knowledge.botany).slice(0, 700)}`,
-      `【生理功能】${stripHtml(knowledge.physiology).slice(0, 600)}`,
-      `【园艺要点】${stripHtml(knowledge.horticulture).slice(0, 700)}`,
+      `【内置知识摘要 · 仅辅助线索，不是教材依据】${knowledge.summary || ''}`,
+      `【形态解剖 · 辅助线索】${stripHtml(knowledge.botany).slice(0, 700)}`,
+      `【生理功能 · 辅助线索】${stripHtml(knowledge.physiology).slice(0, 600)}`,
+      `【园艺要点 · 辅助线索】${stripHtml(knowledge.horticulture).slice(0, 700)}`,
       `【建模口径】${stripHtml(knowledge.caveat).slice(0, 250)}`
     ].join('\n');
     return [
       { role: 'system', content: systemPrompt() },
-      { role: 'user', content: `请解读苹果树的「${part.label}」。以下是本系统内置的参考知识，可作为起点，请补充、校正与深化（若发现其中表述需要限定条件，请明确指出）：\n\n${ctx}` }
+      { role: 'user', content: `请解读苹果树的「${part.label}」。\n\n${ctx}` }
     ];
   }
 
-  /** 流式解读；onToken(textDelta, accumulated) 逐段回调 */
-  async explain(part, knowledge, { onToken, signal } = {}) {
+  /** 底层请求：explain 与课程问答共用 */
+  async _request(messages, { onToken, signal } = {}) {
     this.abort();
     if (!this.isConfigured()) {
       throw Object.assign(new Error('尚未配置可用的 AI 接口'), { code: 'NOT_CONFIGURED' });
@@ -170,7 +237,7 @@ export class AIInterpreter {
       const res = await fetch(this._url(), {
         method: 'POST',
         headers: this._headers(),
-        body: this._body(this.buildMessages(part, knowledge), stream),
+        body: this._body(messages, stream),
         signal: controller.signal
       });
       if (!res.ok) {
@@ -196,6 +263,17 @@ export class AIInterpreter {
     }
   }
 
+  /** 流式解读；onToken(textDelta, accumulated) 逐段回调 */
+  async explain(part, knowledge, { onToken, signal } = {}) {
+    const ctx = await this._courseContext(part.label || '', part.id || null);
+    return this._request(this.buildMessages(part, knowledge, ctx), { onToken, signal });
+  }
+
+  /** 课程助教多轮提问（messages 由 buildCourseMessages 构造） */
+  async chat(messages, { onToken, signal } = {}) {
+    return this._request(messages, { onToken, signal });
+  }
+
   async _readSSE(body, onToken) {
     const reader = body.getReader();
     const decoder = new TextDecoder('utf-8');
@@ -204,7 +282,6 @@ export class AIInterpreter {
       const { value, done: d } = await reader.read();
       done = d;
       buffer += decoder.decode(value || new Uint8Array(), { stream: !d });
-      // 兼容 \n\n 与 \n 两种分隔，逐行处理 data: 前缀
       const lines = buffer.split('\n');
       buffer = lines.pop() ?? '';
       for (let line of lines) {
@@ -249,7 +326,12 @@ export class AIInterpreter {
     if (this._controller) { try { this._controller.abort(); } catch { /* noop */ } this._controller = null; }
   }
 
-  /** 离线降级：把内置知识库整理为可读文本 */
+  /** 课程问答的离线应答：教材原文摘录 + 出处，不生成任何推断 */
+  courseFallback(result) {
+    return buildOfflineAnswer(result);
+  }
+
+  /** 部位解读的离线降级：明确标注来源不是教材，避免与知识库口径混淆 */
   fallback(part, knowledge) {
     const clean = (h) => stripHtml(h);
     return [
@@ -259,7 +341,9 @@ export class AIInterpreter {
       '■ 形态解剖', clean(knowledge.botany).slice(0, 620),
       '', '■ 生理功能', clean(knowledge.physiology).slice(0, 520),
       '', '■ 园艺要点', clean(knowledge.horticulture).slice(0, 720),
-      '', `（来源：系统内置离线知识库 · ${knowledge.refs?.[0] || '果树学通用资料'}）`
+      '',
+      `（来源：系统内置的果树学通用知识条目 · ${knowledge.refs?.[0] || '果树学通用资料'}）`,
+      `（注意：本条不是${BOTANY_SOURCE.short}教材内容，仅供辅助参考；课程助教问答只依据教材。）`
     ].join('\n');
   }
 }

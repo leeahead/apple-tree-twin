@@ -91,6 +91,9 @@
       <div class="tool-sep"></div>
 
       <div class="tool-group">
+        <button class="tool icon-only" id="btn-ask" title="课程助教问答" data-tip="课程助教：依据《植物学（第三版）》回答，附章节与教材页码">
+          <svg viewBox="0 0 20 20" fill="none"><path d="M3 4.5c2.6-1 5.1-1.5 7-1.5s4.4.5 7 1.5v10c-2.6-1-5.1-1.5-7-1.5s-4.4.5-7 1.5v-10Z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/><path d="M10 3v10" stroke="currentColor" stroke-width="1.1"/><path d="M5.2 7h2.4M5.2 9.3h2.4M12.4 7h2.4M12.4 9.3h2.4" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>
+        </button>
         <button class="tool icon-only" id="btn-ai-settings" title="AI 接口设置" data-tip="配置 AI 大模型接口，获取实时专家解读">
           <svg viewBox="0 0 20 20" fill="none"><path d="M10 2.5 11.9 8 17.5 10l-5.6 2L10 17.5 8.1 12 2.5 10l5.6-2L10 2.5Z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/><circle cx="10" cy="10" r="1.6" fill="currentColor"/></svg>
         </button>
@@ -429,6 +432,36 @@
           <li>单指拖拽旋转、双指捏合缩放、双指拖动平移；双击空白处返回全景</li>
           <li>抽屉展开时取景中心自动让位，树体保持完整可见，射线拾取同步对齐</li>
         </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 课程助教问答（依据《植物学（第三版）》） ============ -->
+  <div id="modal-ask" class="modal hidden">
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-card glass qa-card">
+      <div class="modal-head">
+        <div><div class="modal-eyebrow">COURSE ASSISTANT</div><h2>植物学课程助教</h2></div>
+        <button class="modal-x" data-close aria-label="关闭">✕</button>
+      </div>
+
+      <details class="qa-scope" open>
+        <summary>服务对象 · 使用场景 · 知识范围 · 资料来源</summary>
+        <div class="qa-scope-body" id="qa-scope-body"></div>
+      </details>
+
+      <div class="qa-status" id="qa-status"></div>
+      <div class="qa-log" id="qa-log" aria-live="polite"></div>
+      <div class="qa-suggest" id="qa-suggest"></div>
+
+      <div class="qa-input-row">
+        <textarea id="qa-input" rows="2" placeholder="例如：气孔主要分布在叶片的哪一面？为什么？" autocomplete="off"></textarea>
+        <button class="btn primary" id="qa-send">提问</button>
+      </div>
+      <div class="qa-foot">
+        <button class="btn ghost" id="qa-clear">清空对话</button>
+        <span id="qa-feedback-count"></span>
+        <button class="btn ghost" id="qa-settings">AI 接口设置</button>
       </div>
     </div>
   </div>

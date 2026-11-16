@@ -911,3 +911,58 @@ body.compact .ana-left { display: none; }
   body.compact #navigator, body.compact #environment, body.compact #knowledge,
   body.compact #left-drawer-tabs { transition-duration: .01ms; }
 }
+
+/* ---------- 课程助教问答（modal-ask） ---------- */
+.qa-card { width: min(880px, 94vw); max-height: min(88vh, 780px); display: flex; flex-direction: column; }
+.qa-card .modal-head { flex: none; }
+.qa-scope { flex: none; margin: 12px 0 10px; padding: 9px 12px; border: 1px solid var(--line); border-radius: var(--radius-s); background: var(--glass-soft); }
+.qa-scope summary { cursor: pointer; font-size: 11px; letter-spacing: .05em; color: var(--accent); }
+.qa-scope-body { margin-top: 9px; }
+.qa-scope-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; }
+.qa-scope-grid b { display: block; font-size: 10px; letter-spacing: .08em; color: var(--leaf); }
+.qa-scope-grid p, .qa-scope-grid li { margin: 3px 0 0; font-size: 10.5px; line-height: 1.6; color: var(--text-2); }
+.qa-scope-grid ul { margin: 3px 0 0; padding-left: 15px; }
+.qa-scope-note { margin: 9px 0 0; font-size: 9.5px; line-height: 1.5; color: var(--muted); }
+.qa-status { flex: none; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding-bottom: 9px; border-bottom: 1px solid var(--line); font-size: 10px; color: var(--text-2); }
+.qa-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--dim); }
+.qa-dot.on { background: var(--leaf); box-shadow: 0 0 8px var(--leaf); }
+.qa-src, .qa-extra { color: var(--muted); }
+.qa-src { margin-left: auto; }
+.qa-extra { color: var(--accent); }
+.qa-log { flex: 1 1 auto; min-height: 180px; overflow-y: auto; padding: 12px 2px; display: flex; flex-direction: column; gap: 12px; }
+.qa-log::-webkit-scrollbar { width: 5px; }
+.qa-log::-webkit-scrollbar-thumb { background: rgba(159,208,180,.2); border-radius: 4px; }
+.qa-msg { display: flex; flex-direction: column; align-items: flex-start; }
+.qa-msg.user { align-items: flex-end; }
+.qa-bubble { max-width: 92%; padding: 10px 13px; border: 1px solid var(--line); border-radius: 12px; background: var(--glass-soft); color: var(--text); font-size: 12px; line-height: 1.75; }
+.qa-msg.user .qa-bubble { background: var(--accent-soft); border-color: rgba(224,184,113,.28); }
+.qa-bubble p { margin: 0 0 6px; }
+.qa-bubble p:last-child { margin-bottom: 0; }
+.qa-bubble ul { margin: 4px 0 6px; padding-left: 18px; }
+.qa-bubble h4 { margin: 8px 0 4px; font-size: 12px; color: var(--accent); }
+.qa-msg-meta { display: flex; gap: 6px; margin-bottom: 5px; }
+.qa-scope-tag, .qa-mode-tag { padding: 2px 7px; border: 1px solid var(--line-strong); border-radius: 5px; font-size: 9px; color: var(--muted); }
+.qa-scope-tag { color: var(--leaf); border-color: rgba(137,214,165,.3); }
+.qa-evidence { max-width: 92%; margin-top: 6px; font-size: 10px; color: var(--muted); }
+.qa-evidence summary { cursor: pointer; color: var(--accent); }
+.qa-ev-item { margin-top: 6px; padding: 7px 9px; border-left: 2px solid var(--line-strong); background: rgba(255,255,255,.025); }
+.qa-ev-item b { color: var(--text-2); }
+.qa-ev-item p { margin: 4px 0 0; line-height: 1.6; color: var(--text-2); }
+.qa-msg-actions { display: flex; gap: 6px; margin-top: 6px; }
+.qa-fb { padding: 3px 8px; border: 1px solid var(--line); border-radius: 5px; background: transparent; color: var(--muted); font-size: 9px; cursor: pointer; }
+.qa-fb:hover { color: var(--text); border-color: var(--line-strong); }
+.qa-suggest { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 0; }
+.qa-suggest-label { font-size: 10px; color: var(--muted); }
+.qa-chip { padding: 4px 9px; border: 1px solid var(--line); border-radius: 20px; background: var(--glass-soft); color: var(--text-2); font-size: 10px; cursor: pointer; transition: all .18s; }
+.qa-chip:hover { color: var(--accent); border-color: var(--accent); }
+.qa-input-row { flex: none; display: flex; gap: 8px; align-items: stretch; }
+.qa-input-row textarea { flex: 1; resize: none; padding: 9px 11px; border: 1px solid var(--line-strong); border-radius: var(--radius-s); background: rgba(0,0,0,.22); color: var(--text); font-family: var(--font); font-size: 12px; line-height: 1.6; }
+.qa-input-row textarea:focus { outline: none; border-color: var(--accent); }
+.qa-foot { flex: none; display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.qa-foot #qa-feedback-count { margin-left: auto; font-size: 9.5px; color: var(--dim); }
+/* 紧凑横屏：说明卡改单列、对话区压缩，桌面端零影响 */
+body.compact .qa-card { width: 96vw; max-height: 94vh; }
+body.compact .qa-scope-grid { grid-template-columns: 1fr; }
+body.compact .qa-scope-note { display: none; }
+body.compact .qa-log { min-height: 96px; }
+body.compact .qa-suggest { display: none; }

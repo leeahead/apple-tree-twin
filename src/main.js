@@ -14,6 +14,7 @@ import { KnowledgePanel } from './ui/KnowledgePanel.js';
 import { HUD } from './ui/HUD.js';
 import { AnatomyView } from './ui/AnatomyView.js';
 import { CompactLayout } from './ui/CompactLayout.js';
+import { CourseQA } from './ui/CourseQA.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('stage');
@@ -197,6 +198,12 @@ async function boot() {
     onAnatomy: () => anatomy?.toggle()
   });
 
+  /* 7.7 课程助教问答：以《植物学（第三版）》为唯一依据，离线可用 */
+  const courseQA = new CourseQA(ai, {
+    getCurrentPart: () => currentPart,
+    openAISettings: () => hud?.openModal('modal-ai')
+  });
+
   /* 8. 初始环境状态同步 */
   const initialNight = clamp(Math.max(1 - smoothstep(5.4, 7.4, 9), smoothstep(18.2, 20.4, 9)), 0, 1);
   tree.setDayNight(initialNight, 9);
@@ -232,7 +239,7 @@ async function boot() {
   requestAnimationFrame(loop);
 
   // 暴露给控制台，便于评审检查与调试
-  window.__MALUS__ = { sm, tree, registry, director, picking, hud, knowledge, anatomy, compact, ai, materials, THREE, WORLD, PHENO };
+  window.__MALUS__ = { sm, tree, registry, director, picking, hud, knowledge, anatomy, compact, ai, courseQA, materials, THREE, WORLD, PHENO };
 }
 
 boot().catch(fatal);
