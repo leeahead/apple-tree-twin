@@ -912,6 +912,19 @@ body.compact .ana-left { display: none; }
   body.compact #left-drawer-tabs { transition-duration: .01ms; }
 }
 
+/* ---------- 手机端课程助教悬浮入口 ---------- */
+.ask-fab { display: none; position: absolute; z-index: 45; align-items: center; gap: 6px;
+  padding: 7px 11px 7px 9px; border: 1px solid rgba(224,184,113,.36); border-radius: 22px;
+  background: var(--glass-strong); color: var(--accent); font-size: 10px; letter-spacing: .06em;
+  box-shadow: var(--shadow); pointer-events: auto; backdrop-filter: blur(12px); }
+.ask-fab svg { width: 15px; height: 15px; }
+.ask-fab:active { transform: scale(.96); }
+@media (max-width: 720px) and (orientation: portrait) {
+  .ask-fab { display: flex; top: calc(58px + 8px); right: 12px; }
+}
+body.compact .ask-fab { display: flex; top: calc(var(--chrome-top) + 8px); right: calc(12px + var(--safe-r)); }
+body.compact[data-drawer="right"] .ask-fab { display: none; }
+
 /* ---------- 课程助教问答（modal-ask） ---------- */
 .qa-card { width: min(880px, 94vw); max-height: min(88vh, 780px); display: flex; flex-direction: column; }
 .qa-card .modal-head { flex: none; }

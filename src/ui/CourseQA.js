@@ -73,6 +73,7 @@ export class CourseQA {
 
   _bind() {
     $('btn-ask')?.addEventListener('click', () => this.open());
+    $('ask-fab')?.addEventListener('click', () => this.open());
     this.el.send.addEventListener('click', () => this._submit());
     this.el.input.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this._submit(); }

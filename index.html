@@ -234,6 +234,12 @@
   </footer>
 
   <!-- ============ 紧凑模式（手机横屏 / 低高度）：边缘把手与分层抽屉 ============ -->
+  <!-- 竖屏 / 窄屏专用：课程助教悬浮入口（顶栏工具按钮在窄屏易被忽略） -->
+  <button id="ask-fab" class="ask-fab" type="button" aria-label="打开课程助教问答">
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3 4.5c2.6-1 5.1-1.5 7-1.5s4.4.5 7 1.5v10c-2.6-1-5.1-1.5-7-1.5s-4.4.5-7 1.5v-10Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M10 3v10" stroke="currentColor" stroke-width="1.2"/><path d="M5.3 7h2.2M5.3 9.3h2.2M12.5 7h2.2M12.5 9.3h2.2" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>
+    <span>助教</span>
+  </button>
+
   <div id="compact-scrim" aria-hidden="true"></div>
 
   <div id="compact-rail-left" class="compact-rail compact-only">
@@ -427,7 +433,7 @@
         <div><h3>触屏 / 手机横屏</h3><ul>
           <li>低高度横屏自动切换紧凑布局：三维画布保持全屏，左右内容收为屏幕边缘把手</li>
           <li>轻点器官 → 右下角摘要卡；上滑或点「展开详情」查看完整知识框架，下滑「收起为摘要」</li>
-          <li>详情区左右滑动切换「形态解剖 / 生理功能 / 园艺要点 / AI 解读」；左栏顶部切换「器官索引 / 生境控制」</li>
+          <li>详情区左右滑动切换「形态解剖 / 生理功能 / 园艺要点 / 课本解读」；左栏顶部切换「器官索引 / 生境控制」</li>
           <li>左边缘右滑展开左栏、右边缘左滑展开知识；抽屉内反向横滑、再次点把手或按 <kbd>Esc</kbd> 收起</li>
           <li>单指拖拽旋转、双指捏合缩放、双指拖动平移；双击空白处返回全景</li>
           <li>抽屉展开时取景中心自动让位，树体保持完整可见，射线拾取同步对齐</li>

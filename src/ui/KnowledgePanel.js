@@ -1,7 +1,8 @@
 import { getKnowledge } from '../data/knowledge.js';
-import { renderMarkdown, escapeHtml } from '../services/AIInterpreter.js';
+import { renderMarkdown, escapeHtml, botany, BOTANY_SOURCE, formatEvidence, cite } from '../services/AIInterpreter.js';
 
 const $ = (id) => document.getElementById(id);
+const stripHtml = (h) => String(h || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 
 export class KnowledgePanel {
   constructor(ai, callbacks = {}) {
@@ -94,11 +95,11 @@ export class KnowledgePanel {
         ${refs}</div>
       <div class="kn-panel hidden" data-panel="ai">
         <div class="ai-head">
-          <div class="ai-state ${this.ai.isConfigured() ? 'on' : ''}" id="ai-state"><i></i><span id="ai-state-text">${this.ai.isConfigured() ? 'AI 接口已就绪' : '未配置 · 使用离线知识库'}</span></div>
-          <button class="btn primary" id="ai-run">生成实时解读</button>
+          <div class="ai-state ${this.ai.isConfigured() ? 'on' : ''}" id="ai-state"><i></i><span id="ai-state-text">${this.ai.isConfigured() ? 'AI 接口已就绪 · 依据教材片段' : '离线可用 · 教材原文摘录'}</span></div>
+          <button class="btn primary" id="ai-run">生成课本解读</button>
         </div>
-        <div class="ai-output" id="ai-output">点击「生成实时解读」，由大模型结合本部位的植物学上下文生成更深入的形态、生理与园艺分析。
-${this.ai.isConfigured() ? '' : '\n当前未配置接口，将展示系统内置的离线知识库内容。'}</div>
+        <div class="ai-output" id="ai-output">点击「生成课本解读」，系统会先从 ${escapeHtml(BOTANY_SOURCE.short)} 全文检索本部位对应的教材原文，再据此组织形态、生理与园艺分析；每条结论都标注章节与教材页码。
+未配置 AI 接口时直接展示教材原文摘录，同样可回查。</div>
         <div class="ai-actions">
           <button class="btn ghost" id="ai-copy">复制全文</button>
           <button class="btn ghost" id="ai-settings">接口设置</button>
@@ -128,7 +129,7 @@ ${this.ai.isConfigured() ? '' : '\n当前未配置接口，将展示系统内置
     badge.classList.toggle('on', state === 'streaming' || state === 'done' || state === 'ready');
     label.textContent = text;
     btn.disabled = state === 'loading' || state === 'streaming';
-    btn.textContent = (state === 'loading' || state === 'streaming') ? '生成中…' : '重新生成';
+    btn.textContent = (state === 'loading' || state === 'streaming') ? '检索教材中…' : '重新解读';
   }
 
   _renderOutput(text, streaming = false) {
@@ -138,26 +139,76 @@ ${this.ai.isConfigured() ? '' : '\n当前未配置接口，将展示系统内置
     out.scrollTop = out.scrollHeight;
   }
 
+  /** 先检索教材：返回该部位对应的课本原文片段（唯一事实依据） */
+  async _retrieveTextbook() {
+    await botany.load();
+    const q = `${this.part.label} 形态结构 功能`;
+    return botany.retrieve(q, { part: this.part.id, topK: 4 });
+  }
+
+  /** 教材原文摘录 + 出处；无可靠片段时诚实说明，不用内置条目冒充课本 */
+  _textbookExtract(result) {
+    if (result?.confident && result.hits.length) {
+      const lines = [
+        `依据 ${BOTANY_SOURCE.short}，教材中与「${this.part.label}」直接相关的原文如下（按相关度排序）：`,
+        ''
+      ];
+      result.hits.forEach((h, i) => {
+        lines.push(`【${i + 1}】${h.chunk.text.slice(0, 360)}`);
+        lines.push(`　依据：${cite(h)}`);
+        lines.push('');
+      });
+      lines.push('— 以上为教材原文摘录，未做改写。可继续在课程助教中追问此部位。');
+      return lines.join('\n');
+    }
+    return [
+      `教材全文中暂未检索到与「${this.part.label}」直接对应的可靠片段，因此不给出解读，避免凭空补充。`,
+      '',
+      '建议：换用教材中的规范术语（如「维管形成层」「栅栏组织」），或到顶栏「课程助教问答」中提问；涉及具体农事参数请查当地规程或请教老师。'
+    ].join('\n');
+  }
+
   async runAI() {
     if (!this.part) return;
     if (this.aiState === 'streaming' || this.aiState === 'loading') { this.ai.abort(); return; }
 
     const configured = this.ai.isConfigured();
     this._aiText = '';
-    $('ai-source').textContent = configured
-      ? `数据源：${this.ai.getConfig().model || '服务端默认模型'} · OpenAI 兼容接口 · 生成内容由模型产生，请与权威资料核对`
-      : '数据源：系统内置离线知识库（未配置 AI 接口）';
+    this._setState('loading', '正在检索教材…');
+    this._renderOutput('', true);
 
-    if (!configured) {
-      this._setState('done', '离线知识库');
-      this._aiText = this.ai.fallback(this.part, this.knowledge);
+    let result = null;
+    try {
+      result = await this._retrieveTextbook();
+    } catch (err) {
+      this._aiText = `教材语料加载失败：${err.message}\n请通过本地服务或线上站点访问（file:// 下无法加载模块）。`;
+      this._setState('error', '语料加载失败');
       this._renderOutput(this._aiText, false);
-      $('ai-run').textContent = '重新生成';
+      $('ai-source').textContent = `数据源：${BOTANY_SOURCE.short}（未加载成功）`;
       return;
     }
 
-    this._setState('loading', '正在连接模型…');
-    this._renderOutput('', true);
+    // 无可靠片段：任何模式都不解读
+    if (!result.confident) {
+      this._aiText = this._textbookExtract(result);
+      this._setState('done', '教材未涵盖 · 不作答');
+      this._renderOutput(this._aiText, false);
+      $('ai-source').textContent = `检索范围：${BOTANY_SOURCE.short} 全文 · ${result.reason === 'out' ? '超出知识范围' : '依据不足，未生成内容'}`;
+      return;
+    }
+
+    // 离线：直接给教材原文摘录，零生成
+    if (!configured) {
+      this._aiText = this._textbookExtract(result);
+      this._setState('done', '教材原文摘录');
+      this._renderOutput(this._aiText, false);
+      $('ai-source').textContent = `数据源：${BOTANY_SOURCE.short} · 教材原文摘录（附章节与页码，未配置 AI 接口）`;
+      return;
+    }
+
+    // 在线：只把教材片段交给模型组织表达，不让它自由发挥
+    this._setState('loading', '正在依据教材片段组织…');
+    const evidence = formatEvidence(result);
     let acc = '';
     const schedule = () => {
       if (this._pending) return;
@@ -168,21 +219,36 @@ ${this.ai.isConfigured() ? '' : '\n当前未配置接口，将展示系统内置
       });
     };
     try {
-      await this.ai.explain(this.part, this.knowledge, {
+      const messages = [
+        { role: 'system', content: [
+          `你是《植物学》课程助教。唯一事实依据是下面提供的 ${BOTANY_SOURCE.short} 教材原文片段。`,
+          '硬性规则：只依据片段作答；每个结论后标 [依据：第X章… · 教材 Pxxx]；片段没有的内容（数据、品种、剂量、文献）一律不得补充；内置知识摘要只是辅助线索，不是教材内容；片段不足就明说，不猜测。',
+          '按「形态解剖 / 生理机制 / 园艺实践」三层组织，中文 400–600 字，要点式。'
+        ].join('\n') },
+        { role: 'user', content: [
+          '【教材原文片段 · 唯一事实依据】', evidence, '',
+          `【当前部位】${this.part.label}（${this.part.latin || ''}） · ${this.part.group || ''}`,
+          `【内置知识摘要 · 仅辅助线索】${this.knowledge.summary || ''}`,
+          `【园艺要点 · 仅辅助线索】${stripHtml(this.knowledge.horticulture).slice(0, 400)}`,
+          '', `请依据片段解读「${this.part.label}」，逐条标注出处。`
+        ].join('\n') }
+      ];
+      await this.ai.chat(messages, {
         onToken: (_delta, full) => {
           acc = full;
-          if (this.aiState === 'loading') this._setState('streaming', '模型输出中…');
+          if (this.aiState === 'loading') this._setState('streaming', '依据教材组织中…');
           schedule();
         }
       });
-      this._aiText = acc || '（模型返回空内容）';
-      this._setState('done', '解读完成');
+      this._aiText = acc || this._textbookExtract(result);
+      this._setState('done', '课本解读完成');
       this._renderOutput(this._aiText, false);
+      $('ai-source').textContent = `依据：${BOTANY_SOURCE.short} · 模型仅依据检索片段组织表达（${this.ai.getConfig().model || '服务端默认模型'}）`;
     } catch (err) {
-      this._aiText = `${err.message}\n\n以下为系统内置的离线知识库内容：\n\n${this.ai.fallback(this.part, this.knowledge)}`;
-      this._setState('error', '已降级到离线知识库');
+      this._aiText = `${err.message}\n\nAI 调用失败，以下改为教材原文摘录：\n\n${this._textbookExtract(result)}`;
+      this._setState('error', '已降级为教材原文');
       this._renderOutput(this._aiText, false);
-      $('ai-source').textContent = `数据源：离线知识库（AI 调用失败：${err.code || 'ERROR'}）`;
+      $('ai-source').textContent = `数据源：${BOTANY_SOURCE.short} · 原文摘录（AI 调用失败：${err.code || 'ERROR'}）`;
     } finally {
       cancelAnimationFrame(this._raf);
       this._pending = false;
@@ -205,6 +271,6 @@ ${this.ai.isConfigured() ? '' : '\n当前未配置接口，将展示系统内置
     if (!badge || !label) return;
     const ok = this.ai.isConfigured();
     badge.classList.toggle('on', ok);
-    label.textContent = ok ? 'AI 接口已就绪' : '未配置 · 使用离线知识库';
+    label.textContent = ok ? 'AI 已就绪 · 依据教材片段解读' : '离线可用 · 教材原文摘录';
   }
 }
