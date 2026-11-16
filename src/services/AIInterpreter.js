@@ -10,7 +10,7 @@ import {
   BOTANY_SOURCE, SCOPE, SUGGESTED_QUESTIONS, CORPUS_STATS
 } from './BotanyRetriever.js';
 
-export { BOTANY_SOURCE, SCOPE, SUGGESTED_QUESTIONS, CORPUS_STATS, cite };
+export { BOTANY_SOURCE, SCOPE, SUGGESTED_QUESTIONS, CORPUS_STATS, cite, buildOfflineAnswer };
 
 /** 全站共享一个语料实例（懒加载一次，之后复用） */
 export const botany = new BotanyRetriever();

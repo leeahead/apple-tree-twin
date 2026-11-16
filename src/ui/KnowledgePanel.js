@@ -1,5 +1,8 @@
 import { getKnowledge } from '../data/knowledge.js';
-import { renderMarkdown, escapeHtml, botany, BOTANY_SOURCE, formatEvidence, cite } from '../services/AIInterpreter.js';
+import {
+  renderMarkdown, escapeHtml, botany, BOTANY_SOURCE,
+  formatEvidence, cite, buildOfflineAnswer, buildCourseMessages
+} from '../services/AIInterpreter.js';
 
 const $ = (id) => document.getElementById(id);
 const stripHtml = (h) => String(h || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -15,6 +18,10 @@ export class KnowledgePanel {
     this._aiText = '';
     this._pending = false;
     this._raf = 0;
+    // 课本解读里的追问上下文（与课程助教同源，但独立于助教按钮）
+    this._aiHistory = [];
+    this.lastTopic = '';
+    this._followBusy = false;
 
     this.el = {
       root: $('knowledge'), empty: $('kn-empty'), content: $('kn-content'),
@@ -42,6 +49,9 @@ export class KnowledgePanel {
     this.knowledge = getKnowledge(part.id);
     this.aiState = 'idle';
     this._aiText = '';
+    this._aiHistory = [];
+    this.lastTopic = '';
+    this._followBusy = false;
 
     this.el.empty.classList.add('hidden');
     this.el.content.classList.remove('hidden');
@@ -99,7 +109,17 @@ export class KnowledgePanel {
           <button class="btn primary" id="ai-run">生成课本解读</button>
         </div>
         <div class="ai-output" id="ai-output">点击「生成课本解读」，系统会先从 ${escapeHtml(BOTANY_SOURCE.short)} 全文检索本部位对应的教材原文，再据此组织形态、生理与园艺分析；每条结论都标注章节与教材页码。
-未配置 AI 接口时直接展示教材原文摘录，同样可回查。</div>
+生成后可在下方继续追问，追问同样只依据教材，并会记住本部位与上一轮对话。</div>
+        <div class="ai-thread" id="ai-thread"></div>
+        <div class="ai-follow-quick" id="ai-follow-quick">
+          <button type="button" data-q="它有什么作用？">它有什么作用？</button>
+          <button type="button" data-q="教材哪一节讲到它？">教材哪一节讲到它？</button>
+          <button type="button" data-q="举一个相关的代表植物">举一个代表植物</button>
+        </div>
+        <div class="ai-follow-row">
+          <input id="ai-follow-input" type="text" placeholder="继续追问，例如：为什么气孔多在下表皮？" autocomplete="off" />
+          <button class="btn primary" id="ai-follow-send" type="button">追问</button>
+        </div>
         <div class="ai-actions">
           <button class="btn ghost" id="ai-copy">复制全文</button>
           <button class="btn ghost" id="ai-settings">接口设置</button>
@@ -110,6 +130,22 @@ export class KnowledgePanel {
     $('ai-run').addEventListener('click', () => this.runAI());
     $('ai-copy').addEventListener('click', () => this._copy());
     $('ai-settings').addEventListener('click', () => this.cb.onAISettings?.());
+    $('ai-follow-send').addEventListener('click', () => {
+      const input = $('ai-follow-input');
+      this.askFollow(input.value);
+      input.value = '';
+    });
+    $('ai-follow-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        this.askFollow(e.target.value);
+        e.target.value = '';
+      }
+    });
+    $('ai-follow-quick').addEventListener('click', e => {
+      const btn = e.target.closest('button[data-q]');
+      if (btn) this.askFollow(btn.dataset.q);
+    });
   }
 
   setTab(tab) {
@@ -168,12 +204,149 @@ export class KnowledgePanel {
     ].join('\n');
   }
 
+  /** 在解读面板内追加一条追问消息 */
+  _appendFollow(role, text, { meta = '', result = null, streaming = false } = {}) {
+    const thread = $('ai-thread');
+    if (!thread) return null;
+    const wrap = document.createElement('div');
+    wrap.className = `ai-follow-msg ${role}`;
+    const evidence = role === 'assistant' && result?.hits?.length
+      ? `<details class="ai-follow-ev"><summary>教材依据（${result.hits.length}）</summary>${result.hits.map((h, i) =>
+          `<p><b>${i + 1}</b> ${escapeHtml(cite(h))}<br>${escapeHtml(h.chunk.text.slice(0, 300))}</p>`).join('')}</details>`
+      : '';
+    wrap.innerHTML =
+      (meta ? `<div class="ai-follow-meta">${escapeHtml(meta)}</div>` : '') +
+      `<div class="ai-follow-bubble">${renderMarkdown(text)}${streaming ? '<span class="cursor"></span>' : ''}</div>` +
+      evidence;
+    wrap.dataset.text = text;
+    thread.appendChild(wrap);
+    thread.scrollTop = thread.scrollHeight;
+    return wrap;
+  }
+
+  _followDone() {
+    this._followBusy = false;
+    const btn = $('ai-follow-send');
+    if (btn) { btn.disabled = false; btn.textContent = '追问'; }
+  }
+
+  /**
+   * 课本解读内的追问：与课程助教共用教材检索 + 同一套提示词规则。
+   * 助教按钮与课程助教面板完全独立，互不影响。
+   */
+  async askFollow(raw) {
+    if (!this.part || this._followBusy) return;
+    const q = String(raw || '').trim();
+    if (!q) return;
+    this._followBusy = true;
+    const btn = $('ai-follow-send');
+    if (btn) { btn.disabled = true; btn.textContent = '检索中…'; }
+    this._appendFollow('user', q);
+
+    let result;
+    try {
+      await botany.load();
+      result = botany.retrieve(q, { part: this.part.id, lastTopic: this.lastTopic, topK: 4 });
+      // 指代消解后把实际检索式显示出来，让用户看到「它」被理解成了哪个器官
+      if (result.resolvedQuery && result.resolvedQuery !== q) {
+        const prefix = `<div class="ai-follow-resolve">已理解为：${escapeHtml(result.resolvedQuery)}</div>`;
+        const threads = $('ai-thread');
+        const last = threads?.lastElementChild;
+        if (last) last.innerHTML = prefix + last.innerHTML;
+      }
+    } catch (err) {
+      this._appendFollow('assistant', `教材语料加载失败：${err.message}`, { meta: '系统' });
+      this._followDone();
+      return;
+    }
+    if (result.topic) this.lastTopic = result.topic;
+
+    const remember = (text) => {
+      this._aiHistory.push({ role: 'user', text: q }, { role: 'assistant', text });
+      if (this._aiHistory.length > 12) this._aiHistory = this._aiHistory.slice(-12);
+    };
+    const history = this._aiHistory.slice();
+
+    // 超范围 / 依据不足：明确不作答，不调用模型
+    if (!result.confident) {
+      const text = buildOfflineAnswer(result);
+      this._appendFollow('assistant', text, {
+        meta: result.reason === 'out' || result.scope === 'out' ? '超出范围 · 未作答' : '依据不足 · 未作答'
+      });
+      remember(text);
+      $('ai-source').textContent = `追问 · ${BOTANY_SOURCE.short} · ${result.reason === 'out' ? '超出知识范围，未作答' : '依据不足，未作答'}`;
+      this._followDone();
+      return;
+    }
+
+    // 离线：教材原文摘录 + 出处，零生成
+    if (!this.ai.isConfigured()) {
+      const text = buildOfflineAnswer(result);
+      this._appendFollow('assistant', text, { meta: `${result.scopeLabel} · 教材原文`, result });
+      remember(text);
+      $('ai-source').textContent = `追问 · ${BOTANY_SOURCE.short} · 教材原文摘录（附章节与页码）`;
+      this._followDone();
+      return;
+    }
+
+    // 在线：只把教材片段交给模型组织表达（与课程助教同一提示词规则）
+    const bubble = this._appendFollow('assistant', '正在依据教材片段作答…', {
+      meta: `${result.scopeLabel} · 教材依据`, result, streaming: true
+    });
+    let acc = '';
+    const schedule = () => {
+      if (this._pending) return;
+      this._pending = true;
+      this._raf = requestAnimationFrame(() => {
+        this._pending = false;
+        if (!bubble) return;
+        const meta = bubble.querySelector('.ai-follow-meta')?.outerHTML || '';
+        const ev = bubble.querySelector('.ai-follow-ev')?.outerHTML || '';
+        bubble.innerHTML = meta + `<div class="ai-follow-bubble">${renderMarkdown(acc)}<span class="cursor"></span></div>` + ev;
+        const thread = $('ai-thread');
+        if (thread) thread.scrollTop = thread.scrollHeight;
+      });
+    };
+    try {
+      const messages = buildCourseMessages(q, { result, part: this.part, history });
+      await this.ai.chat(messages, {
+        onToken: (_delta, full) => { acc = full; schedule(); }
+      });
+      cancelAnimationFrame(this._raf); this._pending = false;
+      const text = acc || buildOfflineAnswer(result);
+      if (bubble) {
+        const meta = bubble.querySelector('.ai-follow-meta')?.outerHTML || '';
+        const ev = bubble.querySelector('.ai-follow-ev')?.outerHTML || '';
+        bubble.innerHTML = meta + `<div class="ai-follow-bubble">${renderMarkdown(text)}</div>` + ev;
+        bubble.dataset.text = text;
+      }
+      remember(text);
+      $('ai-source').textContent = `追问 · ${BOTANY_SOURCE.short} · 模型仅依据检索片段组织表达`;
+    } catch (err) {
+      cancelAnimationFrame(this._raf); this._pending = false;
+      const text = `AI 调用失败（${err.code || 'ERROR'}），以下改为教材原文摘录：\n\n${buildOfflineAnswer(result)}`;
+      if (bubble) {
+        const meta = bubble.querySelector('.ai-follow-meta')?.outerHTML || '';
+        bubble.innerHTML = meta + `<div class="ai-follow-bubble">${renderMarkdown(text)}</div>`;
+        bubble.dataset.text = text;
+      }
+      remember(text);
+      $('ai-source').textContent = `追问 · ${BOTANY_SOURCE.short} · 原文摘录（AI 调用失败：${err.code || 'ERROR'}）`;
+    } finally {
+      this._followDone();
+    }
+  }
+
   async runAI() {
     if (!this.part) return;
     if (this.aiState === 'streaming' || this.aiState === 'loading') { this.ai.abort(); return; }
 
     const configured = this.ai.isConfigured();
     this._aiText = '';
+    this._aiHistory = [];
+    this.lastTopic = '';
+    const thread = $('ai-thread');
+    if (thread) thread.innerHTML = '';
     this._setState('loading', '正在检索教材…');
     this._renderOutput('', true);
 
@@ -193,6 +366,10 @@ export class KnowledgePanel {
       this._aiText = this._textbookExtract(result);
       this._setState('done', '教材未涵盖 · 不作答');
       this._renderOutput(this._aiText, false);
+      this._aiHistory = [
+        { role: 'user', text: `请依据教材解读「${this.part.label}」` },
+        { role: 'assistant', text: this._aiText }
+      ];
       $('ai-source').textContent = `检索范围：${BOTANY_SOURCE.short} 全文 · ${result.reason === 'out' ? '超出知识范围' : '依据不足，未生成内容'}`;
       return;
     }
@@ -200,8 +377,12 @@ export class KnowledgePanel {
     // 离线：直接给教材原文摘录，零生成
     if (!configured) {
       this._aiText = this._textbookExtract(result);
-      this._setState('done', '教材原文摘录');
+      this._setState('done', '教材原文摘录 · 可继续追问');
       this._renderOutput(this._aiText, false);
+      this._aiHistory = [
+        { role: 'user', text: `请依据教材解读「${this.part.label}」` },
+        { role: 'assistant', text: this._aiText }
+      ];
       $('ai-source').textContent = `数据源：${BOTANY_SOURCE.short} · 教材原文摘录（附章节与页码，未配置 AI 接口）`;
       return;
     }
@@ -241,8 +422,12 @@ export class KnowledgePanel {
         }
       });
       this._aiText = acc || this._textbookExtract(result);
-      this._setState('done', '课本解读完成');
+      this._setState('done', '课本解读完成 · 可继续追问');
       this._renderOutput(this._aiText, false);
+      this._aiHistory = [
+        { role: 'user', text: `请依据教材解读「${this.part.label}」` },
+        { role: 'assistant', text: this._aiText }
+      ];
       $('ai-source').textContent = `依据：${BOTANY_SOURCE.short} · 模型仅依据检索片段组织表达（${this.ai.getConfig().model || '服务端默认模型'}）`;
     } catch (err) {
       this._aiText = `${err.message}\n\nAI 调用失败，以下改为教材原文摘录：\n\n${this._textbookExtract(result)}`;
@@ -258,7 +443,9 @@ export class KnowledgePanel {
   }
 
   _copy() {
-    const text = this._aiText || $('ai-output')?.textContent || '';
+    const thread = $('ai-thread');
+    const follow = thread ? [...thread.children].map(m => m.dataset.text || m.textContent).join('\n\n') : '';
+    const text = [this._aiText || $('ai-output')?.textContent || '', follow].filter(Boolean).join('\n\n');
     if (!text) return;
     navigator.clipboard?.writeText(text).then(() => {
       const btn = $('ai-copy');
