@@ -352,11 +352,12 @@
         <div><div class="modal-eyebrow">LLM INTEGRATION</div><h2>AI 大模型实时解读</h2></div>
         <button class="modal-x" data-close aria-label="关闭">✕</button>
       </div>
-      <p class="modal-lead">已内置免费 Agnes Flash 接口，<b>打开即用，无需填写任何配置</b>。系统会连同该器官的植物学上下文一并发送，由模型生成更深入的园艺学解读；需要时也可切换到自己的 OpenAI 兼容接口。</p>
+      <p class="modal-lead">已内置免费 Agnes Flash 接口，<b>线上、本地都打开即用，无需填写任何配置</b>。系统会连同该器官的植物学上下文一并发送，由模型生成更深入的园艺学解读；需要时也可切换到自己的 OpenAI 兼容接口。</p>
 
       <div class="form-row">
         <label for="ai-provider">服务预设</label>
         <select id="ai-provider">
+          <option value="agnes">Agnes Flash（内置免费 · 线上可用，推荐）</option>
           <option value="custom">自定义 / OpenAI 兼容</option>
           <option value="deepseek">DeepSeek</option>
           <option value="moonshot">Moonshot Kimi</option>
@@ -382,7 +383,7 @@
       </div>
       <label class="check-row"><input type="checkbox" id="ai-stream" checked /><span>启用流式输出（SSE）</span></label>
       <div class="modal-note">
-        <b>默认免配置：</b>内置接口的密钥只保存在 <code>server.mjs</code> 服务端进程，前端拿不到，也不用你填。请通过 <code>start.bat</code> 启动（纯静态服务器没有 <code>/api/ai</code>，此时会自动降级为教材原文）。要用自有服务，改用环境变量 <code>AI_BASE_URL</code> / <code>AI_MODEL</code> / <code>AI_API_KEY</code> 覆盖即可。
+        <b>默认免配置：</b>内置的是公开免费演示接口，浏览器可直接跨域调用，<b>线上 Pages 也能正常问答</b>。密钥随前端发布、仅用于演示，请勿在此填入生产密钥。想用自己的接口可选「自定义」；本地 <code>start.bat</code> 下也可切到「本地服务端代理」，由服务端持有密钥。
       </div>
       <div class="modal-actions">
         <button class="btn ghost" id="ai-reset">恢复内置配置</button>

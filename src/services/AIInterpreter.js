@@ -9,37 +9,34 @@ import {
   BotanyRetriever, buildOfflineAnswer, cite,
   BOTANY_SOURCE, SCOPE, SUGGESTED_QUESTIONS, CORPUS_STATS
 } from './BotanyRetriever.js';
+import { BUILTIN_CREDENTIALS, BUILTIN_AI_HINT } from './builtinAI.js';
 
 export { BOTANY_SOURCE, SCOPE, SUGGESTED_QUESTIONS, CORPUS_STATS, cite, buildOfflineAnswer };
+export { BUILTIN_CREDENTIALS, BUILTIN_AI_HINT };
 
 /** 全站共享一个语料实例（懒加载一次，之后复用） */
 export const botany = new BotanyRetriever();
 
-const STORAGE_KEY = 'malus-ai-config-v2';       // v1 → v2：默认启用内置接口，旧空配置不再遮挡
-const LEGACY_STORAGE_KEY = 'malus-ai-config-v1';
-
-/** 内置免费接口仅用作前端展示；真正的地址/模型/密钥由 server.mjs 持有 */
-export const BUILTIN_AI_HINT = Object.freeze({
-  endpoint: '/api/ai',
-  model: 'agnes-3.0-flash',
-  label: '内置 Agnes Flash（免配置）'
-});
+const STORAGE_KEY = 'malus-ai-config-v3';       // v2 → v3：默认改为浏览器直连，Pages 上也能用 AI
+const LEGACY_KEYS = ['malus-ai-config-v2', 'malus-ai-config-v1'];
 
 export const PROVIDERS = {
+  agnes:     { endpoint: BUILTIN_AI_HINT.endpoint, model: BUILTIN_AI_HINT.model, label: BUILTIN_AI_HINT.label },
   custom:    { endpoint: '', model: '', label: '自定义 / OpenAI 兼容' },
   deepseek:  { endpoint: 'https://api.deepseek.com/v1', model: 'deepseek-chat', label: 'DeepSeek' },
   moonshot:  { endpoint: 'https://api.moonshot.cn/v1', model: 'moonshot-v1-8k', label: 'Moonshot Kimi' },
   dashscope: { endpoint: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-plus', label: '阿里通义千问' },
   openai:    { endpoint: 'https://api.openai.com/v1', model: 'gpt-4o-mini', label: 'OpenAI' },
   ollama:    { endpoint: 'http://localhost:11434/v1', model: 'qwen2.5:7b', label: '本地 Ollama' },
-  proxy:     { endpoint: '/api/ai', model: BUILTIN_AI_HINT.model, label: '内置 Agnes Flash（服务端代理，推荐）' }
+  proxy:     { endpoint: '/api/ai', model: BUILTIN_AI_HINT.model, label: '本地服务端代理（可选，密钥不出服务端）' }
 };
 
+/** 默认浏览器直连：线上 Pages 与本地 start.bat 都能用 AI；内置 key 是公开免费 key */
 const DEFAULT_CONFIG = {
-  provider: 'proxy',
+  provider: 'agnes',
   endpoint: BUILTIN_AI_HINT.endpoint,
   model: BUILTIN_AI_HINT.model,
-  apiKey: '',
+  apiKey: BUILTIN_CREDENTIALS.apiKey,
   stream: true,
   enabled: true
 };
@@ -48,12 +45,14 @@ function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return { ...DEFAULT_CONFIG, ...JSON.parse(raw) };
-    // 迁移旧版：只有确实填过自定义接口的机器才保留原设置，其余直接启用内置接口
-    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
-    if (legacy) {
+    // 迁移旧版：只保留用户真正自己填过的第三方接口；内置/代理配置一律回落到直连
+    for (const key of LEGACY_KEYS) {
+      const legacy = localStorage.getItem(key);
+      if (!legacy) continue;
       const old = JSON.parse(legacy);
-      const meaningful = old && (old.provider === 'proxy' || (old.endpoint && old.model));
-      if (meaningful) return { ...DEFAULT_CONFIG, ...old };
+      const userOwn = old && old.endpoint && old.model && old.apiKey &&
+        old.endpoint !== '/api/ai' && old.endpoint !== BUILTIN_AI_HINT.endpoint;
+      if (userOwn) return { ...DEFAULT_CONFIG, ...old, provider: 'custom' };
     }
   } catch { /* 隐私模式 / 损坏数据：回落到内置配置 */ }
   return { ...DEFAULT_CONFIG };
@@ -208,17 +207,17 @@ export class AIInterpreter {
 
   _body(messages, stream, overrides = {}) {
     const c = this.config;
-    return JSON.stringify({
-      proxy: c.provider === 'proxy' ? true : false,
-      endpoint: c.provider === 'proxy' ? undefined : c.endpoint,
-      apiKey: c.provider === 'proxy' ? undefined : c.apiKey,
+    const payload = {
       model: c.model,
       messages,
       temperature: 0.35,
       max_tokens: 1400,
       stream,
       ...overrides
-    });
+    };
+    // 只有走本地代理时才标记 proxy；浏览器直连不要把 endpoint/apiKey 塞进请求体
+    if (c.provider === 'proxy') payload.proxy = true;
+    return JSON.stringify(payload);
   }
 
   /** 检索当前部位的教材片段，返回可直接注入的上下文字符串 */

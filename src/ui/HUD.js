@@ -1,5 +1,5 @@
 import { GROUPS, PHENO, timeLabel } from '../core/constants.js';
-import { PROVIDERS, BUILTIN_AI_HINT, escapeHtml } from '../services/AIInterpreter.js';
+import { PROVIDERS, BUILTIN_AI_HINT, BUILTIN_CREDENTIALS, escapeHtml } from '../services/AIInterpreter.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -165,17 +165,19 @@ export class HUD {
     });
     $('ai-provider').addEventListener('change', e => {
       const key = e.target.value, p = PROVIDERS[key] || PROVIDERS.custom;
+      const locked = (key === 'agnes' || key === 'proxy');
+      $('ai-endpoint').disabled = locked;
+      $('ai-model').disabled = locked;
+      $('ai-key').disabled = locked;
       if (key === 'proxy') {
+        $('ai-endpoint').value = '/api/ai';
+        $('ai-model').value = BUILTIN_AI_HINT.model;
+        $('ai-key').value = '';
+      } else if (key === 'agnes') {
         $('ai-endpoint').value = BUILTIN_AI_HINT.endpoint;
         $('ai-model').value = BUILTIN_AI_HINT.model;
-        $('ai-endpoint').disabled = true;
-        $('ai-model').disabled = true;
-        $('ai-key').disabled = true;
-        $('ai-key').value = '';
+        $('ai-key').value = BUILTIN_CREDENTIALS.apiKey;
       } else {
-        $('ai-endpoint').disabled = false;
-        $('ai-model').disabled = false;
-        $('ai-key').disabled = false;
         if (key !== 'custom') { $('ai-endpoint').value = p.endpoint; $('ai-model').value = p.model; }
       }
       $('ai-status').textContent = '';
@@ -227,15 +229,25 @@ export class HUD {
     $('ai-model').disabled = false;
     $('ai-key').value = c.apiKey || '';
     $('ai-stream').checked = c.stream !== false;
-    if (c.provider === 'proxy') {
-      // 代理模式下服务端持有真实配置，前端只展示内置提示值且不允许误改
+    if (c.provider === 'agnes') {
+      // 线上直连：内置免费 key 随前端发布，展示但不允许误改
       $('ai-endpoint').value = BUILTIN_AI_HINT.endpoint;
       $('ai-model').value = c.model || BUILTIN_AI_HINT.model;
+      $('ai-key').value = c.apiKey || BUILTIN_CREDENTIALS.apiKey;
+      $('ai-endpoint').disabled = true;
+      $('ai-model').disabled = true;
+      $('ai-key').disabled = true;
+    } else if (c.provider === 'proxy') {
+      // 代理模式下服务端持有真实配置，前端只展示提示值且不允许误改
+      $('ai-endpoint').value = '/api/ai';
+      $('ai-model').value = c.model || BUILTIN_AI_HINT.model;
+      $('ai-key').value = '';
       $('ai-endpoint').disabled = true;
       $('ai-model').disabled = true;
       $('ai-key').disabled = true;
     } else {
       $('ai-endpoint').disabled = false;
+      $('ai-model').disabled = false;
       $('ai-key').disabled = false;
     }
   }
