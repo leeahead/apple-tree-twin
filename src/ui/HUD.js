@@ -2,6 +2,7 @@ import { GROUPS, PHENO, timeLabel } from '../core/constants.js';
 import { PROVIDERS, BUILTIN_AI_HINT, BUILTIN_CREDENTIALS, escapeHtml } from '../services/AIInterpreter.js';
 
 const $ = (id) => document.getElementById(id);
+const isPagesHost = () => typeof location !== 'undefined' && /github\.io$/i.test(location.hostname);
 
 export class HUD {
   constructor(registry, ai, callbacks = {}) {
@@ -158,6 +159,11 @@ export class HUD {
 
   /* ---------------- 模态框 ---------------- */
   _bindModals() {
+    // 线上静态站点没有 /api/ai：直接把代理选项禁用，避免用户踩 405
+    if (isPagesHost()) {
+      const proxyOpt = $('ai-provider')?.querySelector('option[value="proxy"]');
+      if (proxyOpt) { proxyOpt.disabled = true; proxyOpt.textContent += '（线上不可用）'; }
+    }
     document.querySelectorAll('.modal').forEach(modal => {
       modal.addEventListener('click', e => {
         if (e.target.closest('[data-close]')) modal.classList.add('hidden');
@@ -192,17 +198,26 @@ export class HUD {
     });
     $('ai-save').addEventListener('click', () => {
       const cfg = this._readAIForm();
-      this.ai.saveConfig(cfg);
-      this.cb.onAIConfigSaved?.(cfg);
+      const forced = isPagesHost() && cfg.provider === 'proxy';
+      const saved = this.ai.saveConfig(cfg);
+      this.cb.onAIConfigSaved?.(saved);
       $('modal-ai').classList.add('hidden');
-      this.toast(this.ai.isConfigured() ? 'AI 接口配置已保存' : '配置已保存 · 仍需补全接口参数');
+      this.toast(forced
+        ? '线上没有本地代理，已切回内置直连'
+        : (this.ai.isConfigured() ? 'AI 接口配置已保存' : '配置已保存 · 仍需补全接口参数'));
     });
     $('ai-test').addEventListener('click', async () => {
       const st = $('ai-status');
+      const cfg = this._readAIForm();
+      if (isPagesHost() && cfg.provider === 'proxy') {
+        st.className = 'modal-status err';
+        st.textContent = '线上 Pages 没有 /api/ai，请选「Agnes Flash」直连，无需填写任何配置。';
+        return;
+      }
       st.className = 'modal-status';
       st.textContent = '正在测试连接…';
       try {
-        const r = await this.ai.test(this._readAIForm());
+        const r = await this.ai.test(cfg);
         st.textContent = `连接成功 · 模型回复：${r.reply.slice(0, 40)}`;
       } catch (err) {
         st.className = 'modal-status err';

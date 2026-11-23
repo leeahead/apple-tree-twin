@@ -41,10 +41,20 @@ const DEFAULT_CONFIG = {
   enabled: true
 };
 
+/** 修补历史配置：线上没有 /api/ai，旧的代理配置会让测试连接报 405 */
+function normalize(cfg) {
+  if (!cfg) return { ...DEFAULT_CONFIG };
+  const c = { ...DEFAULT_CONFIG, ...cfg };
+  const staleProxy = c.provider === 'proxy' || c.endpoint === '/api/ai';
+  const brokenBuiltin = c.provider === 'agnes' &&
+    (c.endpoint !== BUILTIN_AI_HINT.endpoint || !c.apiKey);
+  return (staleProxy || brokenBuiltin) ? { ...DEFAULT_CONFIG } : c;
+}
+
 function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return { ...DEFAULT_CONFIG, ...JSON.parse(raw) };
+    if (raw) return normalize(JSON.parse(raw));
     // 迁移旧版：只保留用户真正自己填过的第三方接口；内置/代理配置一律回落到直连
     for (const key of LEGACY_KEYS) {
       const legacy = localStorage.getItem(key);
@@ -169,7 +179,12 @@ export class AIInterpreter {
   getConfig() { return { ...this.config }; }
 
   saveConfig(cfg) {
-    this.config = { ...this.config, ...cfg };
+    const merged = { ...this.config, ...cfg };
+    // 线上静态站点没有 /api/ai，选了代理也强制回到内置直连，避免 405
+    const onPages = typeof location !== 'undefined' && /github\.io$/i.test(location.hostname);
+    this.config = (onPages && merged.provider === 'proxy')
+      ? { ...DEFAULT_CONFIG }
+      : normalize(merged);
     this.config.enabled = Boolean(this.config.endpoint && this.config.model) || this.config.provider === 'proxy';
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(this.config)); } catch { /* 隐私模式下忽略 */ }
     return this.config;
