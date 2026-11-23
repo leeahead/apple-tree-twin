@@ -15,7 +15,15 @@ export { BOTANY_SOURCE, SCOPE, SUGGESTED_QUESTIONS, CORPUS_STATS, cite, buildOff
 /** 全站共享一个语料实例（懒加载一次，之后复用） */
 export const botany = new BotanyRetriever();
 
-const STORAGE_KEY = 'malus-ai-config-v1';
+const STORAGE_KEY = 'malus-ai-config-v2';       // v1 → v2：默认启用内置接口，旧空配置不再遮挡
+const LEGACY_STORAGE_KEY = 'malus-ai-config-v1';
+
+/** 内置免费接口仅用作前端展示；真正的地址/模型/密钥由 server.mjs 持有 */
+export const BUILTIN_AI_HINT = Object.freeze({
+  endpoint: '/api/ai',
+  model: 'agnes-3.0-flash',
+  label: '内置 Agnes Flash（免配置）'
+});
 
 export const PROVIDERS = {
   custom:    { endpoint: '', model: '', label: '自定义 / OpenAI 兼容' },
@@ -24,19 +32,31 @@ export const PROVIDERS = {
   dashscope: { endpoint: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-plus', label: '阿里通义千问' },
   openai:    { endpoint: 'https://api.openai.com/v1', model: 'gpt-4o-mini', label: 'OpenAI' },
   ollama:    { endpoint: 'http://localhost:11434/v1', model: 'qwen2.5:7b', label: '本地 Ollama' },
-  proxy:     { endpoint: '/api/ai', model: '', label: '本地服务端代理（推荐）' }
+  proxy:     { endpoint: '/api/ai', model: BUILTIN_AI_HINT.model, label: '内置 Agnes Flash（服务端代理，推荐）' }
 };
 
 const DEFAULT_CONFIG = {
-  provider: 'custom', endpoint: '', model: '', apiKey: '', stream: true, enabled: false
+  provider: 'proxy',
+  endpoint: BUILTIN_AI_HINT.endpoint,
+  model: BUILTIN_AI_HINT.model,
+  apiKey: '',
+  stream: true,
+  enabled: true
 };
 
 function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { ...DEFAULT_CONFIG };
-    return { ...DEFAULT_CONFIG, ...JSON.parse(raw) };
-  } catch { return { ...DEFAULT_CONFIG }; }
+    if (raw) return { ...DEFAULT_CONFIG, ...JSON.parse(raw) };
+    // 迁移旧版：只有确实填过自定义接口的机器才保留原设置，其余直接启用内置接口
+    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (legacy) {
+      const old = JSON.parse(legacy);
+      const meaningful = old && (old.provider === 'proxy' || (old.endpoint && old.model));
+      if (meaningful) return { ...DEFAULT_CONFIG, ...old };
+    }
+  } catch { /* 隐私模式 / 损坏数据：回落到内置配置 */ }
+  return { ...DEFAULT_CONFIG };
 }
 
 function stripHtml(html) {
@@ -153,6 +173,13 @@ export class AIInterpreter {
     this.config = { ...this.config, ...cfg };
     this.config.enabled = Boolean(this.config.endpoint && this.config.model) || this.config.provider === 'proxy';
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(this.config)); } catch { /* 隐私模式下忽略 */ }
+    return this.config;
+  }
+
+  /** 一键恢复内置免费接口（用户改过配置后可用） */
+  resetBuiltin() {
+    this.config = { ...DEFAULT_CONFIG };
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(this.config)); } catch { /* noop */ }
     return this.config;
   }
 

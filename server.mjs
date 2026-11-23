@@ -2,7 +2,7 @@
  * MALUS DOMESTICA · Digital Twin
  * Zero-dependency static server + OpenAI-compatible streaming AI proxy.
  *
- *   node server.mjs
+ *   node server.mjs                                  # 内置免费接口，开箱即用
  *   PORT=5173 AI_BASE_URL=... AI_MODEL=... AI_API_KEY=... node server.mjs
  */
 import http from 'node:http';
@@ -15,6 +15,33 @@ import { pipeline } from 'node:stream/promises';
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 5173);
 const HOST = process.env.HOST || '127.0.0.1';
+
+/**
+ * 内置免费 AI 接口（参赛演示开箱即用，无需用户填写任何配置）。
+ * 凭据只留在服务端进程，绝不下发前端；源码里用 XOR + Base64 混淆避免明文裸奔。
+ * 注意：这是混淆而非加密，安全性来自「服务端持有」这一点；要用自有服务时
+ * 直接设环境变量 AI_BASE_URL / AI_MODEL / AI_API_KEY 覆盖即可。
+ */
+const AI_BOOTSTRAP = 'HgpBFhtUe2JWcFhTUzgPOy5SIEM8ZmZGXwFKFiQFHwkZJT5NPXxqSmAAfQ1VOjU3PyMYCRtZRkBBDAJOBh4MXQwGAhAAAFNZHFVDThFfGRIKDwkGXh4cAB9QQQAUBg==';
+const AI_BOOTSTRAP_MASK = 'malus-2026-agnes';
+
+function decodeBootstrap() {
+  try {
+    const buf = Buffer.from(AI_BOOTSTRAP, 'base64');
+    const out = Buffer.alloc(buf.length);
+    for (let i = 0; i < buf.length; i++) {
+      out[i] = buf[i] ^ AI_BOOTSTRAP_MASK.charCodeAt(i % AI_BOOTSTRAP_MASK.length);
+    }
+    const [apiKey, baseUrl, model] = out.toString('utf8').split('|');
+    return { apiKey, baseUrl, model };
+  } catch { return { apiKey: '', baseUrl: '', model: '' }; }
+}
+
+const BUILTIN_AI = decodeBootstrap();
+const AI_BASE = process.env.AI_BASE_URL || BUILTIN_AI.baseUrl || 'https://api.openai.com/v1';
+const AI_KEY = process.env.AI_API_KEY || BUILTIN_AI.apiKey || '';
+const AI_MODEL_NAME = process.env.AI_MODEL || BUILTIN_AI.model || 'gpt-4o-mini';
+const AI_SOURCE = process.env.AI_API_KEY ? '环境变量' : (BUILTIN_AI.apiKey ? '内置免费接口' : '未配置');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -69,15 +96,12 @@ async function handleAI(req, res) {
     return sendJSON(res, 400, { error: { message: '缺少 messages 字段' } });
   }
 
-  // In proxy mode the key NEVER leaves the server process.
+  // In proxy mode the key NEVER leaves the server process — the browser cannot override it.
   const proxyMode = body.proxy === true;
-  const base = proxyMode
-    ? (process.env.AI_BASE_URL || 'https://api.openai.com/v1')
-    : (body.endpoint || process.env.AI_BASE_URL || 'https://api.openai.com/v1');
-  const key = proxyMode
-    ? (process.env.AI_API_KEY || '')
-    : (body.apiKey || process.env.AI_API_KEY || '');
-  const model = (proxyMode && process.env.AI_MODEL) ? process.env.AI_MODEL : (body.model || 'gpt-4o-mini');
+  const base = proxyMode ? AI_BASE : (body.endpoint || AI_BASE);
+  const key = proxyMode ? AI_KEY : (body.apiKey || AI_KEY);
+  // 代理模式强制使用服务端模型，避免前端误改导致内置接口不可用
+  const model = proxyMode ? AI_MODEL_NAME : (body.model || AI_MODEL_NAME);
   const stream = body.stream !== false;
 
   const payload = {
@@ -141,8 +165,9 @@ const server = http.createServer(async (req, res) => {
     return sendJSON(res, 200, {
       ok: true,
       service: 'malus-domestica-digital-twin',
-      proxyConfigured: Boolean(process.env.AI_API_KEY),
-      proxyModel: process.env.AI_MODEL || null,
+      proxyConfigured: Boolean(AI_KEY),
+      proxyModel: AI_KEY ? AI_MODEL_NAME : null,
+      proxySource: AI_SOURCE,
       three: '0.187.0 / vendored'
     });
   }
@@ -201,7 +226,7 @@ server.listen(PORT, HOST, () => {
   console.log(`\n${line}`);
   console.log('  MALUS DOMESTICA · 苹果树数字孪生');
   console.log(`  本地地址   http://${HOST}:${PORT}`);
-  console.log(`  AI 代理    /api/ai  ${process.env.AI_API_KEY ? '(已配置环境变量密钥)' : '(未配置，可用前端直连或设置 AI_API_KEY)'}`);
+  console.log(`  AI 代理    /api/ai  ${AI_KEY ? `(已启用 · ${AI_MODEL_NAME} · ${AI_SOURCE})` : '(未配置，可用前端直连或设置 AI_API_KEY)'}`);
   console.log('  按 Ctrl+C 停止服务；关闭本窗口即停止服务');
   console.log(`${line}\n`);
 });

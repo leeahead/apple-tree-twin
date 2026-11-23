@@ -1,5 +1,5 @@
 import { GROUPS, PHENO, timeLabel } from '../core/constants.js';
-import { PROVIDERS, escapeHtml } from '../services/AIInterpreter.js';
+import { PROVIDERS, BUILTIN_AI_HINT, escapeHtml } from '../services/AIInterpreter.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -166,17 +166,27 @@ export class HUD {
     $('ai-provider').addEventListener('change', e => {
       const key = e.target.value, p = PROVIDERS[key] || PROVIDERS.custom;
       if (key === 'proxy') {
-        $('ai-endpoint').value = '/api/ai';
-        $('ai-model').value = $('ai-model').value || 'server-default';
+        $('ai-endpoint').value = BUILTIN_AI_HINT.endpoint;
+        $('ai-model').value = BUILTIN_AI_HINT.model;
         $('ai-endpoint').disabled = true;
+        $('ai-model').disabled = true;
         $('ai-key').disabled = true;
         $('ai-key').value = '';
       } else {
         $('ai-endpoint').disabled = false;
+        $('ai-model').disabled = false;
         $('ai-key').disabled = false;
         if (key !== 'custom') { $('ai-endpoint').value = p.endpoint; $('ai-model').value = p.model; }
       }
       $('ai-status').textContent = '';
+    });
+    $('ai-reset')?.addEventListener('click', () => {
+      this.ai.resetBuiltin();
+      this._loadAIForm();
+      this.cb.onAIConfigSaved?.();
+      $('ai-status').textContent = '';
+      $('ai-status').className = 'modal-status';
+      this.toast('已恢复内置免费接口，无需填写配置');
     });
     $('ai-save').addEventListener('click', () => {
       const cfg = this._readAIForm();
@@ -214,12 +224,19 @@ export class HUD {
     $('ai-provider').value = c.provider || 'custom';
     $('ai-endpoint').value = c.endpoint || '';
     $('ai-model').value = c.model || '';
+    $('ai-model').disabled = false;
     $('ai-key').value = c.apiKey || '';
     $('ai-stream').checked = c.stream !== false;
     if (c.provider === 'proxy') {
-      $('ai-endpoint').value = '/api/ai';
+      // 代理模式下服务端持有真实配置，前端只展示内置提示值且不允许误改
+      $('ai-endpoint').value = BUILTIN_AI_HINT.endpoint;
+      $('ai-model').value = c.model || BUILTIN_AI_HINT.model;
       $('ai-endpoint').disabled = true;
+      $('ai-model').disabled = true;
       $('ai-key').disabled = true;
+    } else {
+      $('ai-endpoint').disabled = false;
+      $('ai-key').disabled = false;
     }
   }
 
